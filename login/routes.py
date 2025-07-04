@@ -4,10 +4,14 @@ import jwt
 import datetime
 from flask_wtf import CSRFProtect
 from utils.auth import get_current_user, login_required
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 from . import login_bp
 
-SECRET_KEY = 'your_secret_key'
+SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'your-secret-key-change-this-in-production')
 
 @login_bp.route('/signin', methods=['GET', 'POST'])
 def signin():

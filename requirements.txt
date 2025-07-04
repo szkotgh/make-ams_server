@@ -1,3 +1,4 @@
 Flask
 PyJWT
-Flask-WTF 
+Flask-WTF
+python-dotenv 

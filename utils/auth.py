@@ -1,12 +1,12 @@
 from flask import request, redirect, url_for, g
 import jwt
 from functools import wraps
-import dotenv
 import os
+from dotenv import load_dotenv
 
-dotenv.load_dotenv()
+load_dotenv()
 
-SECRET_KEY = os.environ["JWT_SECRET_KEY"]
+SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'your-secret-key-change-this-in-production')
 
 def get_current_user():
     if hasattr(g, 'user'):
