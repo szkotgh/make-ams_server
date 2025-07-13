@@ -17,25 +17,16 @@ def init_db():
             CREATE TABLE IF NOT EXISTS users (
                 user_id VARCHAR(16) PRIMARY KEY,                        -- 유저 로그인 ID
                 user_pw VARCHAR(256) NOT NULL,                          -- 유저 비밀번호(암호화된 값)
-                user_pw_salt VARCHAR(16) NOT NULL,                      -- 유저 비밀번호 솔트값
+                salt VARCHAR(16) NOT NULL,                             -- 유저 비밀번호 솔트값
                 user_name VARCHAR(10) NOT NULL,                         -- 유저 이름(정확인 실제 이름)
                 is_activated BOOLEAN NOT NULL DEFAULT 0,                -- 유저 활성화 여부(0: 비활성화, 1: 활성화. 회원가입 후 관리자가 승인해야 계정 로그인 가능)
                 is_admin BOOLEAN NOT NULL DEFAULT 0,                    -- 관리자 여부
-                group_id INT NOT NULL,                                  -- 그룹 ID(디자인? 정보보안? AI/SW?)
                 join_year INT NOT NULL,                                 -- 입학년도(학년계산용)
                 kakaowork_id VARCHAR(32) DEFAULT NULL,                  -- 카카오워크 ID(카카오워크 연동 시 사용)
                 create_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -- 유저 정보 생성 시각
                 update_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -- 마지막 유저 정보 수정 시각
                 
                 FOREIGN KEY (group_id) REFERENCES groups(group_id)
-            );
-            
-            -- 동아리 그룹 정보 테이블
-            CREATE TABLE IF NOT EXISTS groups (
-                group_id INTEGER PRIMARY KEY AUTOINCREMENT,  -- 그룹 ID(ID)
-                group_name VARCHAR(16) NOT NULL,         -- 그룹 이름(MAKE@AI/SW)
-                display_name VARCHAR(16) NOT NULL,       -- 그룹 표시 이름(MAKE@AI/SW)
-                part_possible BOOLEAN NOT NULL DEFAULT 0 -- 참여 가능 여부
             );
             
             -- 하드웨어 장치에 있는 버튼(게스트 접근, True일 시 버튼만 누르면 문이 열림)을 통한 인증을 위한 테이블
