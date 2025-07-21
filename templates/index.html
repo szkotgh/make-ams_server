@@ -1,9 +1,23 @@
 {% extends "base.html" %}
 
 {% block head %}
-    
+<link rel="manifest" href="/manifest.webmanifest" crossorigin="anonymous"/>
+<link rel="apple-touch-icon" href="/images/icon-192.png" />
+
 {% endblock head %}
 
 {% block body %}
 MAKE; AMS-MK2
+
+<script>
+    (() => {
+        if ("serviceWorker" in navigator) {
+                navigator.serviceWorker.register('/sw.js').then((registration) => {
+                console.log(registration);
+            }, (err) => {
+                console.log(err)
+            });
+        }
+    })();
+</script>
 {% endblock body %}

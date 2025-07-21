@@ -18,3 +18,17 @@ def favicon():
 @router_bp.route('/robots.txt')
 def robots():
     return send_file('static/robots.txt')
+
+# Manifest and Service Worker
+@router_bp.route('/manifest.webmanifest')
+def manifest():
+    return send_file('static/manifest.webmanifest')
+@router_bp.route('/sw.js')
+def service_worker():
+    return send_file('static/sw.js')
+@router_bp.route('/images/icon-192.png')
+def icon_192():
+    return send_file('static/images/icon-192.png')
+@router_bp.route('/images/icon-512.png')
+def icon_512():
+    return send_file('static/images/icon-512.png')
