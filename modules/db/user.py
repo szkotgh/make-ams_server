@@ -1,6 +1,6 @@
 import hashlib
 import os
-from db import get_db_connection, close_db_connection
+from ..db import get_db_connection, close_db_connection
 
 def create_user(user_id, password, user_name, group_id, join_year):
     salt = os.urandom(8).hex()

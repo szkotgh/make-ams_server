@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cosmic Bubble Shooter</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            font-family: 'Arial', sans-serif;
+            user-select: none;
+        }
+        #gameCanvas {
+            cursor: crosshair;
+        }
+        #ui {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 24px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        #combo {
+            position: fixed;
+            top: 60px;
+            left: 20px;
+            color: #ffd700;
+            font-size: 20px;
+            opacity: 0;
+        }
+        #gameOver {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            padding: 30px 50px;
+            border-radius: 15px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 0 30px rgba(255,255,255,0.2);
+        }
+        button {
+            background: #4CAF50;
+            border: none;
+            padding: 15px 30px;
+            color: white;
+            font-size: 18px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <div id="ui">
+        Score: <span id="score">0</span>
+        Time: <span id="timer">60</span>
+    </div>
+    <div id="combo">COMBO x<span id="comboCount">1</span></div>
+    <canvas id="gameCanvas"></canvas>
+    <div id="gameOver">
+        <h2>GAME OVER</h2>
+        <p>Final Score: <span id="finalScore">0</span></p>
+        <button onclick="startGame()">Play Again</button>
+    </div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+let [w, h] = [window.innerWidth, window.innerHeight];
+canvas.width = w;
+canvas.height = h;
+
+class Bubble {
+    constructor() {
+        this.reset();
+        this.glow = 0;
+    }
+
+    reset() {
+        this.x = Math.random() * w;
+        this.y = h + 50;
+        this.radius = 15 + Math.random() * 25;
+        this.speed = 1 + Math.random() * 3;
+        this.type = Math.random() < 0.05 ? 'rainbow' : 
+                    Math.random() < 0.3 ? 'red' : 
+                    Math.random() < 0.6 ? 'blue' : 'green';
+        this.alpha = 1;
+    }
+
+    draw() {
+        ctx.save();
+        ctx.globalAlpha = this.alpha;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        
+        // Glow effect
+        ctx.shadowColor = this.getColor();
+        ctx.shadowBlur = 20 * this.glow;
+        
+        ctx.fillStyle = this.getColor();
+        ctx.fill();
+        ctx.restore();
+    }
+
+    getColor() {
+        const colors = {
+            red: '#ff5555',
+            green: '#55ff55',
+            blue: '#5555ff',
+            rainbow: `hsl(${Date.now()/10 % 360}, 70%, 60%)`
+        };
+        return colors[this.type];
+    }
+
+    getPoints() {
+        return {
+            red: 1,
+            green: 3,
+            blue: 5,
+            rainbow: 10
+        }[this.type];
+    }
+
+    update() {
+        this.y -= this.speed;
+        this.glow = Math.min(this.glow + 0.05, 1);
+        if(this.y < -50) this.reset();
+    }
+}
+
+let bubbles = Array(20).fill().map(() => new Bubble());
+let score = 0;
+let timeLeft = 60;
+let combo = 0;
+let comboTimeout;
+let lastClickTime = 0;
+
+function animate() {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+    ctx.fillRect(0, 0, w, h);
+
+    bubbles.forEach(bubble => {
+        bubble.update();
+        bubble.draw();
+    });
+
+    // Update combo display
+    document.getElementById('combo').style.opacity = combo > 1 ? 1 : 0;
+    document.getElementById('comboCount').textContent = combo;
+
+    requestAnimationFrame(animate);
+}
+
+function checkHit(x, y) {
+    const now = Date.now();
+    const timeDiff = now - lastClickTime;
+    lastClickTime = now;
+
+    if(timeDiff < 500) combo++;
+    else combo = 1;
+
+    bubbles.forEach(bubble => {
+        const dx = x - bubble.x;
+        const dy = y - bubble.y;
+        if(Math.sqrt(dx*dx + dy*dy) < bubble.radius) {
+            score += bubble.getPoints() * combo;
+            bubble.reset();
+            bubble.glow = 0;
+            createParticles(x, y, bubble.getColor());
+        }
+    });
+
+    document.getElementById('score').textContent = score;
+}
+
+function createParticles(x, y, color) {
+    for(let i = 0; i < 10; i++) {
+        const particle = {
+            x, y,
+            vx: (Math.random() - 0.5) * 10,
+            vy: (Math.random() - 0.5) * 10,
+            life: 1
+        };
+
+        setTimeout(() => {
+            ctx.save();
+            ctx.fillStyle = color;
+            ctx.globalAlpha = particle.life;
+            ctx.beginPath();
+            ctx.arc(particle.x, particle.y, 3, 0, Math.PI*2);
+            ctx.fill();
+            ctx.restore();
+        }, i * 10);
+    }
+}
+
+function gameLoop() {
+    timeLeft--;
+    document.getElementById('timer').textContent = timeLeft;
+    
+    if(timeLeft <= 0) {
+        document.getElementById('gameOver').style.display = 'block';
+        document.getElementById('finalScore').textContent = score;
+        return;
+    }
+    setTimeout(gameLoop, 1000);
+}
+
+function startGame() {
+    score = 0;
+    timeLeft = 60;
+    combo = 0;
+    document.getElementById('gameOver').style.display = 'none';
+    bubbles = Array(20).fill().map(() => new Bubble());
+    gameLoop();
+}
+
+canvas.addEventListener('click', (e) => {
+    if(timeLeft > 0) checkHit(e.clientX, e.clientY);
+});
+
+window.addEventListener('resize', () => {
+    [w, h] = [window.innerWidth, window.innerHeight];
+    canvas.width = w;
+    canvas.height = h;
+});
+
+// Sound credit notification
+console.log('Sound effects from https://zapsplat.com');
+startGame();
+animate();
+</script>
+</body>
+</html>

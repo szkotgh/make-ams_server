@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Survival Clicker</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        #gameContainer { position: relative; width: 100vw; height: 100vh; }
+        #gameCanvas { background: #1a1a1a; }
+        #hud { position: absolute; top: 20px; left: 20px; color: white; font-family: Arial; font-size: 24px; }
+        #gameOver { 
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: red;
+            font-size: 48px;
+            text-align: center;
+            font-family: Arial;
+            text-shadow: 2px 2px black;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        <div id="hud">Score: <span id="score">0</span></div>
+        <div id="gameOver">
+            GAME OVER!<br>
+            <button onclick="restartGame()" style="font-size:24px; margin-top:20px;">Play Again</button>
+        </div>
+    </div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+let score = 0;
+let isGameOver = false;
+let screenShake = 0;
+
+// Canvas resize
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// Player object
+const player = {
+    x: canvas.width/2,
+    y: canvas.height/2,
+    size: 30,
+    targetX: canvas.width/2,
+    targetY: canvas.height/2,
+    speed: 5
+};
+
+// Game objects
+let enemies = [];
+let projectiles = [];
+let particles = [];
+let lastSpawn = 0;
+let difficulty = 1;
+
+// Sound effects
+const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+function playSound(frequency, duration) {
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.value = frequency;
+    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+    
+    oscillator.start();
+    oscillator.stop(audioContext.currentTime + duration);
+}
+
+// Game functions
+function spawnEnemy() {
+    const side = Math.floor(Math.random() * 4);
+    let x, y;
+    
+    switch(side) {
+        case 0: // top
+            x = Math.random() * canvas.width;
+            y = -50;
+            break;
+        case 1: // right
+            x = canvas.width + 50;
+            y = Math.random() * canvas.height;
+            break;
+        case 2: // bottom
+            x = Math.random() * canvas.width;
+            y = canvas.height + 50;
+            break;
+        case 3: // left
+            x = -50;
+            y = Math.random() * canvas.height;
+            break;
+    }
+    
+    enemies.push({
+        x, y,
+        size: 15 + Math.random() * 15,
+        speed: 1 + difficulty * 0.2,
+        angle: Math.atan2(player.y - y, player.x - x)
+    });
+}
+
+function createParticles(x, y, color) {
+    for(let i = 0; i < 10; i++) {
+        particles.push({
+            x,
+            y,
+            size: Math.random() * 4 + 2,
+            color,
+            angle: Math.random() * Math.PI * 2,
+            speed: Math.random() * 3 + 2,
+            life: 1.0
+        });
+    }
+}
+
+function update() {
+    if(isGameOver) return;
+    
+    // Player movement
+    player.x += (player.targetX - player.x) * 0.1;
+    player.y += (player.targetY - player.y) * 0.1;
+    
+    // Spawn enemies
+    if(Date.now() - lastSpawn > 1000 / difficulty) {
+        spawnEnemy();
+        lastSpawn = Date.now();
+        difficulty += 0.05;
+    }
+    
+    // Update enemies
+    enemies.forEach((enemy, index) => {
+        enemy.x += Math.cos(enemy.angle) * enemy.speed;
+        enemy.y += Math.sin(enemy.angle) * enemy.speed;
+        
+        // Collision with player
+        const dx = player.x - enemy.x;
+        const dy = player.y - enemy.y;
+        const distance = Math.sqrt(dx*dx + dy*dy);
+        
+        if(distance < player.size/2 + enemy.size/2) {
+            gameOver();
+        }
+        
+        // Remove off-screen enemies
+        if(enemy.x < -100 || enemy.x > canvas.width+100 || 
+           enemy.y < -100 || enemy.y > canvas.height+100) {
+            enemies.splice(index, 1);
+        }
+    });
+    
+    // Update projectiles
+    projectiles.forEach((proj, index) => {
+        proj.x += Math.cos(proj.angle) * proj.speed;
+        proj.y += Math.sin(proj.angle) * proj.speed;
+        proj.life -= 0.02;
+        
+        // Collision detection
+        enemies.forEach((enemy, eIndex) => {
+            const dx = proj.x - enemy.x;
+            const dy = proj.y - enemy.y;
+            const distance = Math.sqrt(dx*dx + dy*dy);
+            
+            if(distance < proj.size/2 + enemy.size/2) {
+                createParticles(enemy.x, enemy.y, '#FF0000');
+                enemies.splice(eIndex, 1);
+                projectiles.splice(index, 1);
+                score += 100;
+                screenShake = 10;
+                playSound(300 + Math.random() * 500, 0.1);
+            }
+        });
+    });
+    
+    // Update particles
+    particles.forEach((particle, index) => {
+        particle.x += Math.cos(particle.angle) * particle.speed;
+        particle.y += Math.sin(particle.angle) * particle.speed;
+        particle.life -= 0.03;
+        particle.size *= 0.97;
+        if(particle.life <= 0) particles.splice(index, 1);
+    });
+    
+    // Update HUD
+    document.getElementById('score').textContent = score;
+}
+
+function draw() {
+    if(screenShake > 0) {
+        ctx.setTransform(1, 0, 0, 1, 
+            Math.random() * screenShake - screenShake/2, 
+            Math.random() * screenShake - screenShake/2
+        );
+        screenShake *= 0.9;
+    } else {
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+    }
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw player
+    ctx.fillStyle = '#00FF00';
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, player.size/2, 0, Math.PI*2);
+    ctx.fill();
+    
+    // Draw enemies
+    ctx.fillStyle = '#FF0000';
+    enemies.forEach(enemy => {
+        ctx.beginPath();
+        ctx.arc(enemy.x, enemy.y, enemy.size/2, 0, Math.PI*2);
+        ctx.fill();
+    });
+    
+    // Draw projectiles
+    ctx.fillStyle = '#FFFF00';
+    projectiles.forEach(proj => {
+        ctx.globalAlpha = proj.life;
+        ctx.beginPath();
+        ctx.arc(proj.x, proj.y, proj.size, 0, Math.PI*2);
+        ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+    
+    // Draw particles
+    particles.forEach(particle => {
+        ctx.fillStyle = particle.color;
+        ctx.globalAlpha = particle.life;
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI*2);
+        ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+}
+
+function gameLoop() {
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
+function gameOver() {
+    isGameOver = true;
+    document.getElementById('gameOver').style.display = 'block';
+    playSound(100, 0.5);
+}
+
+function restartGame() {
+    player.x = canvas.width/2;
+    player.y = canvas.height/2;
+    player.targetX = canvas.width/2;
+    player.targetY = canvas.height/2;
+    
+    enemies = [];
+    projectiles = [];
+    particles = [];
+    score = 0;
+    difficulty = 1;
+    isGameOver = false;
+    document.getElementById('gameOver').style.display = 'none';
+}
+
+// Event listeners
+canvas.addEventListener('click', (e) => {
+    if(isGameOver) return;
+    
+    // Shoot projectile
+    const angle = Math.atan2(
+        e.clientY - player.y,
+        e.clientX - player.x
+    );
+    
+    projectiles.push({
+        x: player.x,
+        y: player.y,
+        angle,
+        speed: 15,
+        size: 5,
+        life: 1.0
+    });
+    
+    playSound(800 + Math.random() * 400, 0.05);
+});
+
+canvas.addEventListener('mousemove', (e) => {
+    player.targetX = e.clientX;
+    player.targetY = e.clientY;
+});
+
+// Start game
+gameLoop();
+</script>
+</body>
+</html>

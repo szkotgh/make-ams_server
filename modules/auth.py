@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'your-secret-key-change-this-in-production')
+JWT_SECRET_KEY = os.environ['JWT_SECRET_KEY']
 
 def get_current_user():
     if hasattr(g, 'user'):
@@ -15,7 +15,7 @@ def get_current_user():
     if not token:
         return None
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=['HS256'])
         g.user = payload
         return payload
     except jwt.ExpiredSignatureError:

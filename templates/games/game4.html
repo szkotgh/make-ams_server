@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>공 피하기 게임</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+            user-select: none;
+        }
+        
+        #gameCanvas {
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            display: block;
+        }
+        
+        #gameContainer {
+            position: relative;
+        }
+        
+        #startScreen, #gameOverScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+        }
+        
+        #gameOverScreen {
+            display: none;
+        }
+        
+        h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        button {
+            background: linear-gradient(135deg, #ff5f6d, #ffc371);
+            border: none;
+            color: white;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-top: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+        }
+        
+        #scoreDisplay {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+        
+        #highScoreDisplay {
+            font-size: 1.2em;
+            margin-bottom: 20px;
+            color: #ffc371;
+        }
+        
+        .instructions {
+            margin-top: 20px;
+            font-size: 1.1em;
+            max-width: 80%;
+            line-height: 1.5;
+        }
+        
+        .powerup-indicator {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .powerup-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        
+        <div id="startScreen">
+            <h1>공 피하기 게임</h1>
+            <div class="instructions">
+                화면 아무 곳이나 클릭하여 플레이어를 이동시킵니다.<br>
+                떨어지는 공을 피하면서 최대한 오래 생존하세요!<br>
+                파워업을 획득하면 특별한 능력을 사용할 수 있습니다.
+            </div>
+            <button id="startButton">게임 시작</button>
+        </div>
+        
+        <div id="gameOverScreen">
+            <h1>게임 오버!</h1>
+            <div id="finalScore">점수: 0</div>
+            <div id="finalHighScore">최고 기록: 0</div>
+            <button id="restartButton">다시 시작</button>
+        </div>
+    </div>
+
+    <script>
+        // 게임 설정
+        const config = {
+            width: 800,
+            height: 600,
+            playerSize: 30,
+            playerSpeed: 15,
+            initialBallCount: 3,
+            ballSpawnRate: 60,
+            ballSpeedIncrease: 0.1,
+            powerupSpawnRate: 0.01,
+            powerupDuration: 300,
+            scorePerSecond: 10,
+            colors: {
+                player: '#4CAF50',
+                balls: ['#FF5252', '#FFEB3B', '#03A9F4', '#9C27B0'],
+                powerups: {
+                    shield: '#2196F3',
+                    slow: '#FF9800',
+                    double: '#4CAF50',
+                    clear: '#F44336'
+                }
+            }
+        };
+
+        // 게임 상태
+        let gameState = {
+            canvas: null,
+            ctx: null,
+            player: null,
+            balls: [],
+            powerups: [],
+            score: 0,
+            highScore: localStorage.getItem('highScore') || 0,
+            gameTime: 0,
+            frameCount: 0,
+            isRunning: false,
+            activePowerups: {},
+            lastMousePos: { x: 0, y: 0 }
+        };
+
+        // 게임 객체
+        class Player {
+            constructor(x, y, size) {
+                this.x = x;
+                this.y = y;
+                this.size = size;
+                this.color = config.colors.player;
+                this.shield = false;
+            }
+            
+            draw(ctx) {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                
+                if (this.shield) {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size + 5, 0, Math.PI * 2);
+                    ctx.strokeStyle = config.colors.powerups.shield;
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                }
+            }
+            
+            moveTo(x, y) {
+                // 부드러운 이동을 위해 현재 위치에서 목표 위치로 점진적으로 이동
+                const dx = x - this.x;
+                const dy = y - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance > config.playerSpeed) {
+                    this.x += (dx / distance) * config.playerSpeed;
+                    this.y += (dy / distance) * config.playerSpeed;
+                } else {
+                    this.x = x;
+                    this.y = y;
+                }
+                
+                // 화면 경계 처리
+                this.x = Math.max(this.size, Math.min(config.width - this.size, this.x));
+                this.y = Math.max(this.size, Math.min(config.height - this.size, this.y));
+            }
+        }
+
+        class Ball {
+            constructor() {
+                this.reset();
+                this.speed = 2 + Math.random() * 2;
+                this.color = config.colors.balls[Math.floor(Math.random() * config.colors.balls.length)];
+            }
+            
+            reset() {
+                this.x = Math.random() * config.width;
+                this.y = -20;
+                this.size = 10 + Math.random() * 20;
+            }
+            
+            update() {
+                this.y += this.speed;
+                
+                if (this.y > config.height + this.size) {
+                    this.reset();
+                    this.speed += config.ballSpeedIncrease;
+                    return true; // 화면 아래로 떨어진 경우 true 반환
+                }
+                return false;
+            }
+            
+            draw(ctx) {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+            }
+        }
+
+        class Powerup {
+            constructor(type) {
+                this.type = type;
+                this.x = Math.random() * config.width;
+                this.y = -20;
+                this.size = 15;
+                this.speed = 3;
+                this.color = config.colors.powerups[type];
+            }
+            
+            update() {
+                this.y += this.speed;
+                return this.y > config.height + this.size;
+            }
+            
+            draw(ctx) {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                
+                // 파워업 타입 표시
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 12px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                let symbol = '';
+                switch(this.type) {
+                    case 'shield': symbol = 'S'; break;
+                    case 'slow': symbol = '⌛'; break;
+                    case 'double': symbol = '2X'; break;
+                    case 'clear': symbol = 'C'; break;
+                }
+                
+                ctx.fillText(symbol, this.x, this.y);
+            }
+        }
+
+        // 게임 초기화
+        function initGame() {
+            gameState.canvas = document.getElementById('gameCanvas');
+            gameState.ctx = gameState.canvas.getContext('2d');
+            
+            gameState.canvas.width = config.width;
+            gameState.canvas.height = config.height;
+            
+            gameState.player = new Player(config.width / 2, config.height - 50, config.playerSize);
+            gameState.balls = [];
+            gameState.powerups = [];
+            gameState.score = 0;
+            gameState.gameTime = 0;
+            gameState.frameCount = 0;
+            gameState.activePowerups = {};
+            
+            // 초기 공 생성
+            for (let i = 0; i < config.initialBallCount; i++) {
+                gameState.balls.push(new Ball());
+            }
+            
+            // 이벤트 리스너 설정
+            gameState.canvas.addEventListener('click', handleCanvasClick);
+            document.getElementById('startButton').addEventListener('click', startGame);
+            document.getElementById('restartButton').addEventListener('click', startGame);
+        }
+
+        // 게임 시작
+        function startGame() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('gameOverScreen').style.display = 'none';
+            
+            gameState.isRunning = true;
+            gameState.player = new Player(config.width / 2, config.height - 50, config.playerSize);
+            gameState.balls = [];
+            gameState.powerups = [];
+            gameState.score = 0;
+            gameState.gameTime = 0;
+            gameState.frameCount = 0;
+            gameState.activePowerups = {};
+            
+            for (let i = 0; i < config.initialBallCount; i++) {
+                gameState.balls.push(new Ball());
+            }
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        // 게임 오버 처리
+        function gameOver() {
+            gameState.isRunning = false;
+            
+            // 최고 기록 업데이트
+            if (gameState.score > gameState.highScore) {
+                gameState.highScore = gameState.score;
+                localStorage.setItem('highScore', gameState.highScore);
+            }
+            
+            // 게임 오버 화면 업데이트
+            document.getElementById('finalScore').textContent = `점수: ${gameState.score}`;
+            document.getElementById('finalHighScore').textContent = `최고 기록: ${gameState.highScore}`;
+            document.getElementById('gameOverScreen').style.display = 'flex';
+        }
+
+        // 게임 루프
+        function gameLoop(timestamp) {
+            if (!gameState.isRunning) return;
+            
+            update();
+            render();
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        // 게임 상태 업데이트
+        function update() {
+            gameState.frameCount++;
+            gameState.gameTime += 1/60; // 대략적인 초 단위 시간
+            
+            // 점수 업데이트 (초당 점수)
+            gameState.score += config.scorePerSecond / 60;
+            
+            // 공 업데이트
+            let ballsPassed = 0;
+            gameState.balls.forEach(ball => {
+                if (ball.update()) {
+                    ballsPassed++;
+                }
+            });
+            
+            // 일정 확률로 새 공 추가
+            if (gameState.frameCount % config.ballSpawnRate === 0) {
+                gameState.balls.push(new Ball());
+            }
+            
+            // 파워업 업데이트
+            gameState.powerups = gameState.powerups.filter(powerup => !powerup.update());
+            
+            // 파워업 생성
+            if (Math.random() < config.powerupSpawnRate) {
+                const types = ['shield', 'slow', 'double', 'clear'];
+                const type = types[Math.floor(Math.random() * types.length)];
+                gameState.powerups.push(new Powerup(type));
+            }
+            
+            // 활성 파워업 업데이트
+            for (const type in gameState.activePowerups) {
+                gameState.activePowerups[type]--;
+                
+                if (gameState.activePowerups[type] <= 0) {
+                    delete gameState.activePowerups[type];
+                    
+                    // 파워업 효과 해제
+                    if (type === 'shield') {
+                        gameState.player.shield = false;
+                    } else if (type === 'slow') {
+                        gameState.balls.forEach(ball => ball.speed *= 2);
+                    } else if (type === 'double') {
+                        // 점수 배율 효과는 자동으로 해제됨
+                    }
+                }
+            }
+            
+            // 충돌 검사
+            checkCollisions();
+        }
+
+        // 충돌 검사
+        function checkCollisions() {
+            const player = gameState.player;
+            
+            // 파워업 충돌 검사
+            for (let i = gameState.powerups.length - 1; i >= 0; i--) {
+                const powerup = gameState.powerups[i];
+                const dx = player.x - powerup.x;
+                const dy = player.y - powerup.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < player.size + powerup.size) {
+                    // 파워업 획득
+                    activatePowerup(powerup.type);
+                    gameState.powerups.splice(i, 1);
+                }
+            }
+            
+            // 공 충돌 검사
+            if (gameState.activePowerups.shield) {
+                return; // 쉴드가 활성화되어 있으면 충돌 무시
+            }
+            
+            for (const ball of gameState.balls) {
+                const dx = player.x - ball.x;
+                const dy = player.y - ball.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < player.size + ball.size) {
+                    gameOver();
+                    return;
+                }
+            }
+        }
+
+        // 파워업 활성화
+        function activatePowerup(type) {
+            // 기존 동일 타입 파워업이 있으면 지속시간 연장
+            if (gameState.activePowerups[type]) {
+                gameState.activePowerups[type] = config.powerupDuration;
+            } else {
+                gameState.activePowerups[type] = config.powerupDuration;
+            }
+            
+            // 파워업 효과 적용
+            switch(type) {
+                case 'shield':
+                    gameState.player.shield = true;
+                    break;
+                case 'slow':
+                    gameState.balls.forEach(ball => ball.speed *= 0.5);
+                    break;
+                case 'double':
+                    // 점수 배율 효과는 렌더링 시 처리
+                    break;
+                case 'clear':
+                    // 화면의 모든 공 제거
+                    gameState.balls = [];
+                    break;
+            }
+        }
+
+        // 렌더링
+        function render() {
+            const ctx = gameState.ctx;
+            
+            // 배경 그리기
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.fillRect(0, 0, config.width, config.height);
+            
+            // 공 그리기
+            gameState.balls.forEach(ball => ball.draw(ctx));
+            
+            // 파워업 그리기
+            gameState.powerups.forEach(powerup => powerup.draw(ctx));
+            
+            // 플레이어 그리기
+            gameState.player.draw(ctx);
+            
+            // UI 그리기
+            ctx.fillStyle = 'white';
+            ctx.font = '20px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText(`점수: ${Math.floor(gameState.score)}`, 20, 30);
+            ctx.fillText(`최고 기록: ${Math.floor(gameState.highScore)}`, 20, 60);
+            
+            // 파워업 지속시간 표시
+            const powerupX = config.width - 20;
+            let powerupY = 30;
+            ctx.textAlign = 'right';
+            
+            for (const type in gameState.activePowerups) {
+                let text = '';
+                switch(type) {
+                    case 'shield': text = '🛡️'; break;
+                    case 'slow': text = '⌛'; break;
+                    case 'double': text = '2X'; break;
+                    case 'clear': text = '💣'; break;
+                }
+                
+                const timeLeft = Math.ceil(gameState.activePowerups[type] / 60);
+                ctx.fillText(`${text} ${timeLeft}s`, powerupX, powerupY);
+                powerupY += 30;
+            }
+            
+            // 더블 점수 배율 표시
+            if (gameState.activePowerups.double) {
+                ctx.fillStyle = config.colors.powerups.double;
+                ctx.font = 'bold 24px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('2X 점수 배율!', config.width / 2, 40);
+            }
+        }
+
+        // 캔버스 클릭 처리
+        function handleCanvasClick(e) {
+            if (!gameState.isRunning) return;
+            
+            const rect = gameState.canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            gameState.lastMousePos = { x, y };
+        }
+
+        // 주기적으로 플레이어 위치 업데이트 (부드러운 이동을 위해)
+        setInterval(() => {
+            if (gameState.isRunning && gameState.player) {
+                gameState.player.moveTo(gameState.lastMousePos.x, gameState.lastMousePos.y);
+            }
+        }, 1000/60);
+
+        // 게임 초기화 실행
+        window.onload = initGame;
+    </script>
+</body>
+</html>
