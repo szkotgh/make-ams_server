@@ -1,11 +1,12 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, request
 import modules.db.user as db_user
 
 user_bp = Blueprint('user', __name__, url_prefix='/user')
 
 @user_bp.route('/signup')
 def signup():
-    # 회원가입 처리 로직
+    if request.method == "POST":
+        pass
     return render_template('user/signup.html')
 @user_bp.route('/signin')
 def signin():
