@@ -18,7 +18,7 @@
                         <div>{{ message }}</div>
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                     </div>
-                {% elif category == "error" %}         
+                {% elif category == "danger" %}         
                     <div class="alert alert-danger alert-dismissible fade show" role="alert">
                         <div>{{ message }}</div>
                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -33,7 +33,7 @@
                     alert.classList.remove('show');
                     alert.classList.add('hide');
                 });
-            }, 1500);
+            }, 2000);
         </script>
     {% endif %}
 {% endwith %}
