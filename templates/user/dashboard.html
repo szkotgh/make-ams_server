@@ -36,10 +36,6 @@
                             <strong>이름:</strong> {{ user_info.name }}
                         </div>
                         <div class="col-12">
-                            <strong>권한:</strong> 
-                            {% if is_teacher %}<span class="badge text-bg-primary">교사</span>{% else %}<span class="badge text-bg-success">학생</span>{% endif %}{% if is_admin %}<span class="badge text-bg-secondary">관리자</span>{% endif %}
-                        </div>
-                        <div class="col-12">
                             <strong>인적사항:</strong> 
                             {% if not is_teacher and this_year_class %}
                                 {% if this_year_class.is_graduated == 0 %}{{ this_year_class.grade }}학년 {{ this_year_class.class }}반 {{ this_year_class.number }}번{% else %}졸업{% endif %}
@@ -156,17 +152,7 @@
     </div>
 </div>
 
-<div class="toast-container position-fixed bottom-0 end-0 p-3">
-  <div id="notificationToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-    <div class="toast-header">
-      <strong class="me-auto" id="toastTitle">알림</strong>
-      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-    </div>
-    <div class="toast-body" id="toastMessage">
-        Toast Message
-    </div>
-  </div>
-</div>
+
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
@@ -313,17 +299,17 @@
       cache: false,
       success: (response) => {
         if (response.code == 200) {
-          showToast('설정이 업데이트되었습니다.', 'success');
+          showSuccessToast('설정이 업데이트되었습니다.');
           syncNotificationToggles();
         } else {
           toggleElement.checked = originalState;
-          showToast(response.message || '설정 업데이트에 실패했습니다.', 'error');
+          showErrorToast(response.message || '설정 업데이트에 실패했습니다.');
         }
       },
       error: (xhr, status, error) => {
         console.error('설정 업데이트 오류:', xhr.responseText);
         toggleElement.checked = originalState;
-        showToast('서버 오류가 발생했습니다.', 'error');
+        showErrorToast('서버 오류가 발생했습니다.');
         console.error('AJAX Error:', error);
       },
       complete: () => {
@@ -345,36 +331,7 @@
     }
   }
 
-  function showToast(message, type = 'info') {
-    if (typeof bootstrap !== 'undefined' && bootstrap.Toast) {
-      const toastElement = document.getElementById('notificationToast');
-      const toastTitle = document.getElementById('toastTitle');
-      const toastMessage = document.getElementById('toastMessage');
-      
-      if (type === 'success') {
-        toastTitle.textContent = '성공';
-        toastTitle.className = 'me-auto text-success';
-        
-      } else if (type === 'error') {
-        toastTitle.textContent = '오류';
-        toastTitle.className = 'me-auto text-danger';
-      } else {
-        toastTitle.textContent = '알림';
-        toastTitle.className = 'me-auto';
-      }
-      
-      toastMessage.textContent = message;
-      
-      const toast = new bootstrap.Toast(toastElement);
-      toast.show();
-    } else {
-      if (type === 'error') {
-        alert('오류: ' + message);
-      } else {
-        alert(message);
-      }
-    }
-  }
+
 
   function logout() {
     if (confirm("로그아웃 하시겠습니까?")) {
@@ -408,8 +365,21 @@
           }
         },
         error: (xhr, status, error) => {
-          console.log(xhr.responseJSON);
-          alert(xhr.responseJSON.message || '처리 중 오류가 발생했습니다.');
+          let errorMessage = '처리 중 오류가 발생했습니다.';
+          
+          if (xhr.responseJSON && xhr.responseJSON.message) {
+            errorMessage = xhr.responseJSON.message;
+          } else if (xhr.responseText) {
+            try {
+              const response = JSON.parse(xhr.responseText);
+              if (response.message) {
+                errorMessage = response.message;
+              }
+            } catch (e) {
+            }
+          }
+          
+          alert(errorMessage);
         }
       });
     }
@@ -479,16 +449,16 @@
         data: { index: sessionIndex },
         success: (response) => {
           if (response.code == 200) {
-            showToast(response.message, 'success');
+            showSuccessToast(response.message);
           } else {
-            showToast(response.message, 'error');
+            showErrorToast(response.message);
           }
           setTimeout(() => {
             window.location.reload();
           }, 1500);
         },
         error: (xhr, status, error) => {
-          showToast('서버 오류가 발생했습니다.', 'error');
+          showErrorToast('서버 오류가 발생했습니다.');
           console.error('AJAX Error:', error);
         }
       });

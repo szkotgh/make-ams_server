@@ -129,6 +129,7 @@
                                         <span class="badge text-bg-primary">기본 봇</span>
                                     {% endif %}
                                 </h5>
+                                <p class="card-text text-muted">{{ bot.created_at }} 생성</p>
                             </div>
                             {% if not bot.is_default %}
                                 <div class="ms-auto">
@@ -170,19 +171,9 @@ const CONSTANTS = {
         TAB_ELEMENTS: '[data-bs-toggle="list"]',
         SIDEBAR_NAV: '#sidebar-nav',
         MAIN_CONTENT: '#main-content'
-    },
-    MESSAGES: {
-        LOGOUT_CONFIRM: '로그아웃 하시겠습니까?',
-        SET_DEFAULT_CONFIRM: '기본 봇으로 설정하시겠습니까? 이제부터 카카오계정 연동 시 해당 봇으로 설정됩니다.',
-        CREATE_BOT_CONFIRM: '카카오워크 봇을 생성하시겠습니까?\n생성한 봇은 삭제할 수 없습니다.',
-        BOT_NAME_PROMPT: '봇 이름을 입력해주세요.',
-        BOT_APP_KEY_PROMPT: 'App Key를 입력해주세요.',
-        CANCELLED: '취소되었습니다.',
-        REQUEST_ERROR: '요청 처리 중 오류가 발생했습니다.'
     }
 };
 
-// 탭 관리 클래스
 class TabManager {
     constructor() {
         this.tabElements = document.querySelectorAll(CONSTANTS.SELECTORS.TAB_ELEMENTS);
@@ -195,10 +186,8 @@ class TabManager {
     }
 
     setupEventListeners() {
-        // 해시 변경 이벤트 리스너
         window.addEventListener('hashchange', () => this.switchToTabByHash());
         
-        // 탭 클릭 이벤트 리스너
         this.tabElements.forEach(tab => {
             tab.addEventListener('click', (e) => this.handleTabClick(e));
         });
@@ -229,86 +218,106 @@ class TabManager {
     }
 }
 
-// 봇 관리 클래스
 class BotManager {
-    static async setDefaultBot(botId) {
-        if (!confirm(CONSTANTS.MESSAGES.SET_DEFAULT_CONFIRM)) {
+    static setDefaultBot(botId) {
+        if (!confirm('이 봇을 기본 봇으로 설정하시겠습니까?')) {
             return;
         }
 
-        try {
-            const response = await this.makeRequest(
-                '{{ url_for("router.admin.kw_bot_manage.set_default") }}',
-                { bot_id: botId }
-            );
-
-            alert(response.message);
-            window.location.reload();
-        } catch (error) {
-            console.error('봇 기본 설정 오류:', error);
-            alert(CONSTANTS.MESSAGES.REQUEST_ERROR);
-        }
-    }
-
-    static async createBot() {
-        if (!confirm(CONSTANTS.MESSAGES.CREATE_BOT_CONFIRM)) {
-            return;
-        }
-
-        const botName = prompt(CONSTANTS.MESSAGES.BOT_NAME_PROMPT);
-        if (!botName) {
-            alert(CONSTANTS.MESSAGES.CANCELLED);
-            return;
-        }
-
-        const botAppKey = prompt(CONSTANTS.MESSAGES.BOT_APP_KEY_PROMPT);
-        if (!botAppKey) {
-            alert(CONSTANTS.MESSAGES.CANCELLED);
-            return;
-        }
-
-        try {
-            const response = await this.makeRequest(
-                '{{ url_for("router.admin.kw_bot_manage.create") }}',
-                { bot_name: botName, bot_app_key: botAppKey }
-            );
-
-            if (response.code === 200) {
+        $.ajax({
+            url: '{{ url_for("router.admin.kw_bot_manage.set_default") }}',
+            type: 'POST',
+            data: { bot_id: botId },
+            dataType: 'json',
+            success: function(response) {
                 alert(response.message);
-            } else {
-                alert(response.message);
+                window.location.reload();
+            },
+            error: function(xhr, status, error) {
+                console.error('Error setting default bot:', error);
+                let errorMessage = '기본 봇 설정 중 오류가 발생했습니다.';
+                
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                } else if (xhr.responseText) {
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        if (response.message) {
+                            errorMessage = response.message;
+                        }
+                    } catch (e) {
+                        console.error('JSON parsing failed:', e);
+                    }
+                }
+                
+                alert(errorMessage);
             }
-            location.reload();
-        } catch (error) {
-            console.error('봇 생성 오류:', error);
-            const errorMessage = error.responseJSON?.message || CONSTANTS.MESSAGES.REQUEST_ERROR;
-            alert(errorMessage);
-        }
-    }
-
-    static makeRequest(url, data) {
-        return new Promise((resolve, reject) => {
-            $.ajax({
-                url: url,
-                type: 'POST',
-                data: data,
-                success: resolve,
-                error: reject
-            });
         });
     }
+
+    static createBot() {
+        if (!confirm('새로운 카카오워크 봇을 생성하시겠습니까?')) {
+            return;
+        }
+
+        const botName = prompt('봇 이름을 입력해주세요:');
+        if (!botName) {
+            alert('취소되었습니다.');
+            return;
+        }
+
+        const botAppKey = prompt('봇 App Key를 입력해주세요:');
+        if (!botAppKey) {
+            alert('취소되었습니다.');
+            return;
+        }
+
+        $.ajax({
+            url: '{{ url_for("router.admin.kw_bot_manage.create") }}',
+            type: 'POST',
+            data: { bot_name: botName, bot_app_key: botAppKey },
+            dataType: 'json',
+            success: function(response) {
+                if (response.code === 200) {
+                    alert(response.message);
+                } else {
+                    alert(response.message);
+                }
+                location.reload();
+            },
+            error: function(xhr, status, error) {
+                console.error('Error creating bot:', error);
+                let errorMessage = '봇 생성 중 오류가 발생했습니다.';
+                
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                } else if (xhr.responseText) {
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        if (response.message) {
+                            errorMessage = response.message;
+                        }
+                    } catch (e) {
+                        console.error('JSON parsing failed:', e);
+                    }
+                }
+                
+                alert(errorMessage);
+            }
+        });
+    }
+
+
 }
 
-// 유틸리티 함수들
 const Utils = {
     logout() {
-        if (confirm(CONSTANTS.MESSAGES.LOGOUT_CONFIRM)) {
+        if (confirm('로그아웃 하시겠습니까?')) {
             window.location.href = '{{ url_for("router.user.logout") }}';
         }
     }
 };
 
-// 전역 함수들 (기존 코드와의 호환성을 위해)
 function logout() {
     Utils.logout();
 }
@@ -321,8 +330,7 @@ function createBot() {
     BotManager.createBot();
 }
 
-// DOM 로드 완료 시 초기화
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', () => {
     new TabManager();
 });
 </script>

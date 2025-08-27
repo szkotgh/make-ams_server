@@ -183,49 +183,6 @@
     });
   }
 
-  function showToast(message, type = 'info') {
-    const toastContainer = $('.toast-container');
-    if (toastContainer.length === 0) {
-      console.error('Toast container not found.');
-      return;
-    }
-
-    const iconClass = type === 'success' ? 'bi-check-circle-fill text-success' : 
-                     type === 'danger' ? 'bi-x-circle-fill text-danger' : 
-                     type === 'warning' ? 'bi-exclamation-triangle-fill text-warning' : 'bi-info-circle-fill text-info';
-    
-    const title = type === 'success' ? '성공' : 
-                 type === 'danger' ? '오류' : 
-                 type === 'warning' ? '경고' : '알림';
-
-    const toast = $(`
-      <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="toast-header">
-          <i class="bi ${iconClass} me-2"></i>
-          <strong class="me-auto">${title}</strong>
-          <small>방금 전</small>
-          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-        <div class="toast-body">
-          ${message}
-        </div>
-      </div>
-    `);
-
-    toastContainer.append(toast);
-    
-    const bsToast = new bootstrap.Toast(toast[0], {
-      autohide: true,
-      delay: 5000
-    });
-    
-    bsToast.show();
-    
-    toast.on('hidden.bs.toast', function() {
-      $(this).remove();
-    });
-  }
-
   function getErrorMessage(xhr) {
     try {
       if (xhr && xhr.responseJSON !== undefined) {
@@ -267,7 +224,21 @@
   }
 
   function deleteCookie(name) {
-    document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    const paths = ['/', '/user', '/admin', '/device'];
+    const domains = [null, window.location.hostname, '.' + window.location.hostname];
+    
+    paths.forEach(path => {
+      domains.forEach(domain => {
+        let cookieString = name + '=; Path=' + path + '; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+        if (domain) {
+          cookieString += ' Domain=' + domain + ';';
+        }
+        cookieString += ' Max-Age=0;';
+        document.cookie = cookieString;
+      });
+    });
+    
+    document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; Max-Age=0;';
   }
 
   let qrTimer = null;
@@ -291,6 +262,10 @@
     function updateTimerDisplay() {
       if (remainingTime <= 0) {
         clearInterval(qrTimerDisplay);
+        
+        deleteCookie('qr_code_data');
+        deleteCookie('qr_issue_time');
+        
         qrCodeExpired();
         return;
       }
@@ -365,7 +340,34 @@
     return false;
   }
 
+  function cleanupExpiredCookies() {
+    const cookies = ['qr_code_data', 'qr_issue_time'];
+    const now = new Date().getTime();
+    
+    cookies.forEach(cookieName => {
+      if (cookieName === 'qr_issue_time') {
+        const issueTime = getCookie(cookieName);
+        if (issueTime) {
+          const elapsed = now - parseInt(issueTime);
+          if (elapsed >= 60 * 1000) {
+            deleteCookie('qr_code_data');
+            deleteCookie('qr_issue_time');
+          }
+        }
+      } else {
+        // QR 관련 쿠키만 확인하여 필요시 삭제
+        const cookieValue = getCookie(cookieName);
+        if (cookieValue && cookieValue.trim() === '') {
+          deleteCookie(cookieName);
+        }
+      }
+    });
+  }
+
   $(document).ready(() => {
+    // 만료된 쿠키 정리
+    cleanupExpiredCookies();
+    
     if (!checkSavedQRCode()) {
       generateQRCode('QR_PLACEHOLDER');
     }
@@ -390,7 +392,7 @@
   });
 
   function showFirstLoginConfirm() {
-    if (confirm("카카오워크 계정을 연결하면 보안 알림과 같은 다양한 기능을 사용할 수 있습니다. 연결을 권장합니다.\n\n설정하시겠습니까?")) {
+    if (confirm("카카오워크 계정을 연결하면 실시간 보안 알림 기능을 사용할 수 있습니다. 연결을 권장합니다.\n\n설정하시겠습니까?")) {
       window.location.href = '{{ url_for('router.user.dashboard', _anchor='settings') }}';
     }
   }
@@ -398,7 +400,7 @@
   function showYearUpdateConfirm() {
     {% if year_update_needed %}
       {% if year_update_needed.needs_graduation %}
-        if (confirm("새로운 학년이 시작되었습니다.\n{% if year_update_needed.last_grade == 3 %}3학년을 졸업하셨습니다.{% else %}졸업 상태로 설정됩니다.{% endif %}\n\n졸업 정보를 업데이트하시겠습니까?")) {
+        if (confirm("새로운 학년이 시작되었습니다.\n{% if year_update_needed.last_grade == 3 %}3학년을 졸업하셨습니다.{% else %}졸업 상태로 설정됩니다.{% endif %}\n\n졸업 상태로 업데이트하시겠습니까?")) {
           updateGraduationStatus();
         }
       {% elif year_update_needed.new_user %}
@@ -406,41 +408,53 @@
           showClassInputFormForNewUser();
         }
       {% elif year_update_needed.new_grade %}
-        if (confirm("새로운 학년이 시작되었습니다.\n{% if year_update_needed.last_grade %}{{ year_update_needed.last_grade }}학년에서 {{ year_update_needed.new_grade }}학년으로 자동으로 올라갑니다.{% else %}{{ year_update_needed.new_grade }}학년으로 자동으로 올라갑니다.{% endif %}\n\n반과 번호를 입력하여 학급 정보를 갱신하시겠습니까?")) {
+        if (confirm("새로운 학년이 시작되었습니다.\n{% if year_update_needed.last_grade %}{{ year_update_needed.last_grade }}학년에서 {{ year_update_needed.new_grade }}학년으로 자동으로 진급됩니다.{% else %}{{ year_update_needed.new_grade }}학년으로 자동으로 진급됩니다.{% endif %}\n\n반과 번호를 입력하여 학급 정보를 갱신해주세요.")) {
           showClassInputForm();
         }
       {% endif %}
+    {% else %}
+      console.log('No year update needed - user may be graduated or already updated');
     {% endif %}
   }
 
   function showClassInputForm() {
     const newGrade = NEW_GRADE;
-    
-    const _class = prompt(`새로운 ${newGrade}학년의 반을 입력해주세요 (1~10):`);
-    if (_class === null) {
-      alert('취소되었습니다.');
-      return;
+    let classNum = 0;
+    let studentNum = 0;
+
+    while (true) {
+      const _class = prompt(`새로운 ${newGrade}학년의 반을 입력해주세요 (1~10):`);
+      if (_class === null) {
+        alert('취소되었습니다.');
+        return;
+      }
+      
+      classNum = parseInt(_class);
+      if (isNaN(classNum) || classNum < 1 || classNum > 10) {
+        alert('반은 1~10 사이의 숫자로 입력해주세요.');
+        continue;
+      }
+      
+      break;
     }
     
-    const classNum = parseInt(_class);
-    if (isNaN(classNum) || classNum < 1 || classNum > 10) {
-      alert('반은 1~10 사이의 숫자로 입력해주세요.');
-      return;
+    while (true) {
+      const number = prompt(`새로운 ${newGrade}학년 ${classNum}반의 번호를 입력해주세요 (1~30):`);
+      if (number === null) {
+        alert('취소되었습니다.');
+        return;
+      }
+      
+      studentNum = parseInt(number);
+      if (isNaN(studentNum) || studentNum < 1 || studentNum > 30) {
+        alert('번호는 1~30 사이의 숫자로 입력해주세요.');
+        continue;
+      }
+
+      break;
     }
     
-    const number = prompt(`새로운 ${newGrade}학년 ${classNum}반의 번호를 입력해주세요 (1~30):`);
-    if (number === null) {
-      alert('취소되었습니다.');
-      return;
-    }
-    
-    const studentNum = parseInt(number);
-    if (isNaN(studentNum) || studentNum < 1 || studentNum > 30) {
-      alert('번호는 1~30 사이의 숫자로 입력해주세요.');
-      return;
-    }
-    
-    if (confirm(`입력하신 정보가 맞습니까?\n\n학년: ${newGrade}학년\n반: ${classNum}반\n번호: ${studentNum}번\n\n이 정보로 학급 정보를 갱신하시겠습니까?`)) {
+    if (confirm(`입력한 정보가 맞습니까?\n\n학년: ${newGrade}학년\n반: ${classNum}반\n번호: ${studentNum}번\n\n이 정보로 학급 정보를 갱신하시겠습니까?`)) {
       updateClassInfo(newGrade, classNum, studentNum);
     } else {
       alert('취소되었습니다.');
@@ -492,16 +506,24 @@
   }
 
   function updateClassInfo(grade, _class, number) {
+    console.log('updateClassInfo called with:', {grade, _class, number});
     $.ajax({
       url: '/user/update_class_info',
+      type: 'POST',
       method: 'POST',
       contentType: 'application/json',
+      dataType: 'json',
       data: JSON.stringify({
         grade: grade,
         class: _class,
         number: number
       }),
+      beforeSend: function(xhr) {
+        console.log('Sending POST request to:', '/user/update_class_info');
+        console.log('Request data:', {grade, _class, number});
+      },
       success: (data) => {
+        console.log('Success response:', data);
         if (data.success) {
           alert('학급 정보가 성공적으로 업데이트되었습니다.');
           location.reload();
@@ -510,23 +532,43 @@
         }
       },
       error: (xhr, status, error) => {
-        console.error('Error:', error);
-        alert('학급 정보 업데이트 중 오류가 발생했습니다.');
+        let errorMessage = '학급 정보 업데이트 중 오류가 발생했습니다.';
+        if (xhr.responseJSON && xhr.responseJSON.message) {
+          errorMessage = xhr.responseJSON.message;
+        } else if (xhr.responseText) {
+          try {
+            const response = JSON.parse(xhr.responseText);
+            if (response.message) {
+              errorMessage = response.message;
+            }
+          } catch (e) {
+          }
+        }
+        
+        alert(errorMessage);
       }
     });
   }
 
   function createClassInfo(grade, _class, number) {
+    console.log('createClassInfo called with:', {grade, _class, number});
     $.ajax({
       url: '/user/create_class_info',
+      type: 'POST',
       method: 'POST',
       contentType: 'application/json',
+      dataType: 'json',
       data: JSON.stringify({
         grade: grade,
         class: _class,
         number: number
       }),
+      beforeSend: function(xhr) {
+        console.log('Sending POST request to:', '/user/create_class_info');
+        console.log('Request data:', {grade, _class, number});
+      },
       success: (data) => {
+        console.log('Success response:', data);
         if (data.success) {
           alert('학급 정보가 성공적으로 등록되었습니다.');
           location.reload();
@@ -535,21 +577,50 @@
         }
       },
       error: (xhr, status, error) => {
-        console.error('Error:', error);
-        alert('학급 정보 등록 중 오류가 발생했습니다.');
+        console.error('AJAX Error Details:');
+        console.error('Status:', status);
+        console.error('error');
+        console.error('Response Text:', xhr.responseText);
+        console.error('Response JSON:', xhr.responseJSON);
+        console.error('Status Code:', xhr.status);
+        console.error('Request Method:', xhr.type);
+        
+        let errorMessage = '학급 정보 등록 중 오류가 발생했습니다.';
+        if (xhr.responseJSON && xhr.responseJSON.message) {
+          errorMessage = xhr.responseJSON.message;
+        } else if (xhr.responseText) {
+          try {
+            const response = JSON.parse(xhr.responseText);
+            if (response.message) {
+              errorMessage = response.message;
+            }
+          } catch (e) {
+            console.log('JSON 파싱 실패:', e);
+          }
+        }
+        
+        alert(errorMessage);
       }
     });
   }
 
   function updateGraduationStatus() {
+    console.log('updateGraduationStatus called');
     $.ajax({
       url: '/user/update_graduation',
+      type: 'POST',
       method: 'POST',
       contentType: 'application/json',
+      dataType: 'json',
       data: JSON.stringify({
         action: 'graduation'
       }),
+      beforeSend: function(xhr) {
+        console.log('Sending POST request to:', '/user/update_graduation');
+        console.log('Request data:', {action: 'graduation'});
+      },
       success: (data) => {
+        console.log('Success response:', data);
         if (data.success) {
           alert('졸업 정보가 성공적으로 업데이트되었습니다.');
           location.reload();
@@ -558,8 +629,29 @@
         }
       },
       error: (xhr, status, error) => {
+        console.error('AJAX Error Details:');
+        console.error('Status:', status);
         console.error('Error:', error);
-        alert('졸업 정보 업데이트 중 오류가 발생했습니다.');
+        console.error('Response Text:', xhr.responseText);
+        console.error('Response JSON:', xhr.responseJSON);
+        console.error('Status Code:', xhr.status);
+        console.error('Request Method:', xhr.type);
+        
+        let errorMessage = '졸업 정보 업데이트 중 오류가 발생했습니다.';
+        if (xhr.responseJSON && xhr.responseJSON.message) {
+          errorMessage = xhr.responseJSON.message;
+        } else if (xhr.responseText) {
+          try {
+            const response = JSON.parse(xhr.responseText);
+            if (response.message) {
+              errorMessage = response.message;
+            }
+          } catch (e) {
+            console.log('JSON 파싱 실패:', e);
+          }
+        }
+        
+        alert(errorMessage);
       }
     });
   }

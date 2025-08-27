@@ -3,4 +3,6 @@ __pycache__/
 .env
 .DS_Store
 
-modules/db/main.db
+db/database.db
+db/database.db-shm
+db/database.db-wal

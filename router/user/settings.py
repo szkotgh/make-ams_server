@@ -1,7 +1,8 @@
 from flask import Blueprint, request, session
 from middleware.auth import login_required
 import modules.utils as utils
-import db.user_settings
+import db.domains.users.settings as db_user_settings
+import db.domains.users.sessions as db_session
 
 settings_bp = Blueprint('settings', __name__, url_prefix='/settings')
 
@@ -9,7 +10,7 @@ settings_bp = Blueprint('settings', __name__, url_prefix='/settings')
 @login_required
 def get_settings():
     try:
-        session_info = db.session.get_info(session['session_id'])
+        session_info = db_session.get_info(session['session_id'])
         if not session_info.success:
             return utils.ResultDTO(code=400, message="세션 정보를 가져올 수 없습니다.", success=False).to_response()
         
@@ -18,9 +19,9 @@ def get_settings():
         setting_keys = request.args.getlist('keys')
         
         if setting_keys:
-            result = db.user_settings.get_multiple_settings(user_uuid, setting_keys)
+            result = db_user_settings.get_multiple_settings(user_uuid, setting_keys)
         else:
-            result = db.user_settings.get_all_settings(user_uuid)
+            result = db_user_settings.get_all_settings(user_uuid)
         
         if not result.success:
             return utils.ResultDTO(code=400, message=result.detail, success=False).to_response()
@@ -34,7 +35,7 @@ def get_settings():
 @login_required
 def set_setting():
     try:
-        session_info = db.session.get_info(session['session_id'])
+        session_info = db_session.get_info(session['session_id'])
         if not session_info.success:
             return utils.ResultDTO(code=400, message="세션 정보를 가져올 수 없습니다.", success=False).to_response()
         
@@ -54,7 +55,7 @@ def set_setting():
         if setting_type not in ['string', 'boolean', 'integer', 'float']:
             return utils.ResultDTO(code=400, message="잘못된 타입입니다.", success=False).to_response()
         
-        result = db.user_settings.set_setting(user_uuid, setting_key, setting_value, setting_type)
+        result = db_user_settings.set_setting(user_uuid, setting_key, setting_value, setting_type)
         if not result.success:
             return utils.ResultDTO(code=400, message=result.detail, success=False).to_response()
         
@@ -67,7 +68,7 @@ def set_setting():
 @login_required
 def set_multiple_settings():
     try:
-        session_info = db.session.get_info(session['session_id'])
+        session_info = db_session.get_info(session['session_id'])
         if not session_info.success:
             return utils.ResultDTO(code=400, message="세션 정보를 가져올 수 없습니다.", success=False).to_response()
         
@@ -86,7 +87,7 @@ def set_multiple_settings():
             setting_type = setting.get('type', 'string')
             
             if setting_key and setting_value is not None:
-                result = db.user_settings.set_setting(user_uuid, setting_key, setting_value, setting_type)
+                result = db_user_settings.set_setting(user_uuid, setting_key, setting_value, setting_type)
                 if result.success:
                     success_count += 1
                 else:
@@ -104,13 +105,13 @@ def set_multiple_settings():
 @login_required
 def delete_setting(setting_key):
     try:
-        session_info = db.session.get_info(session['session_id'])
+        session_info = db_session.get_info(session['session_id'])
         if not session_info.success:
             return utils.ResultDTO(code=400, message="세션 정보를 가져올 수 없습니다.", success=False).to_response()
         
         user_uuid = session_info.data['user_info']['uuid']
         
-        result = db.user_settings.delete_setting(user_uuid, setting_key)
+        result = db_user_settings.delete_setting(user_uuid, setting_key)
         if not result.success:
             return utils.ResultDTO(code=400, message=result.detail, success=False).to_response()
         

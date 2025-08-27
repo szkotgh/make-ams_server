@@ -2,7 +2,7 @@ from modules import utils
 from modules.kakaowork.conversation import send_message
 
 def send_login_notification(app_key, kw_id, user_name, user_id) -> utils.ResultDTO:
-    text = f"로그인 알림\n{user_name}님이 MAKE-AMS에 로그인했습니다."
+    text = f"로그인 알림\n{user_name}님,\n방금 AMS에 로그인되었습니다."
     blocks = [
         {
             "type":"header",
@@ -11,7 +11,7 @@ def send_login_notification(app_key, kw_id, user_name, user_id) -> utils.ResultD
         },
         {
             "type":"text",
-            "text":f"{user_name}님, 방금 MAKE-AMS에 로그인했습니다.",
+            "text":f"{user_name}님,\n방금 AMS에 로그인되었습니다.",
         },
         {
             "type":"description",
@@ -19,7 +19,7 @@ def send_login_notification(app_key, kw_id, user_name, user_id) -> utils.ResultD
                 "type": "text",
                 "text": f"{user_id}"
             },
-            "term": "AMS_ID",
+            "term": "AMS ID",
             "accent": False
         }
     ]
@@ -30,7 +30,7 @@ def send_login_notification(app_key, kw_id, user_name, user_id) -> utils.ResultD
     return utils.ResultDTO(code=200, message="메시지를 전송했습니다.", success=True)
 
 def send_link_kakaowork_notification(app_key, kw_id, user_name, user_id) -> utils.ResultDTO:
-    text = f"카카오워크 계정 연동 알림\n{user_name}님, 방금 AMS 계정이 카카오워크 계정과 연동되었습니다."
+    text = f"카카오워크 계정 연동 알림\n{user_name}님,\nAMS 계정과 카카오워크 계정 연동이 완료되었습니다."
     blocks = [
         {
             "type":"header",
@@ -39,7 +39,7 @@ def send_link_kakaowork_notification(app_key, kw_id, user_name, user_id) -> util
         },
         {
             "type":"text",
-            "text":f"{user_name}님,\n방금 AMS 계정과 연동되었습니다.",
+            "text":f"{user_name}님,\nAMS 계정과 카카오워크 계정 연동이 완료되었습니다.",
         },
         {
             "type":"description",
@@ -47,7 +47,7 @@ def send_link_kakaowork_notification(app_key, kw_id, user_name, user_id) -> util
                 "type": "text",
                 "text": f"{user_id}"
             },
-            "term": "AMS_ID",
+            "term": "AMS ID",
             "accent": False
         }
     ]
@@ -58,7 +58,7 @@ def send_link_kakaowork_notification(app_key, kw_id, user_name, user_id) -> util
     return utils.ResultDTO(code=200, message="메시지를 전송했습니다.", success=True)
 
 def send_unlink_kakaowork_notification(app_key, kw_id, user_name, user_id) -> utils.ResultDTO:
-    text = f"카카오워크 계정 연동 해제 알림\n{user_name}님, 방금 AMS 계정이 카카오워크 계정과 연동을 해제했습니다."
+    text = f"카카오워크 계정 연동 해제 알림\n{user_name}님,\nAMS 계정과 카카오워크 계정 연동이 해제되었습니다."
     blocks = [
         {
             "type":"header",
@@ -67,7 +67,7 @@ def send_unlink_kakaowork_notification(app_key, kw_id, user_name, user_id) -> ut
         },
         {
             "type":"text",
-            "text":f"{user_name}님,\n방금 AMS 계정과 연동 해제되었습니다.",
+            "text":f"{user_name}님,\nAMS 계정과 카카오워크 계정 연동이 해제되었습니다.",
         },
         {
             "type":"description",
@@ -75,7 +75,7 @@ def send_unlink_kakaowork_notification(app_key, kw_id, user_name, user_id) -> ut
                 "type": "text",
                 "text": f"{user_id}"
             },
-            "term": "AMS_ID",
+            "term": "AMS ID",
             "accent": False
         }
     ]

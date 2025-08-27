@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for
 import middleware.auth as auth
 import modules.utils as utils
-import db.kakaowork_bot
+import db.domains.kakaowork.bot as db_kakaowork_bot
 
 kw_bot_manage_bp = Blueprint('kw_bot_manage', __name__, url_prefix='/kw_bot_manage')
 
@@ -11,7 +11,7 @@ def create():
     bot_name = request.form.get('bot_name')
     bot_app_key = request.form.get('bot_app_key')
     
-    result = db.kakaowork_bot.create_bot(bot_name, bot_app_key)
+    result = db_kakaowork_bot.create_bot(bot_name, bot_app_key)
     if not result.success:
         return utils.ResultDTO(code=400, message=f"봇 생성에 실패했습니다: {result.detail}", success=False).to_response()
     
@@ -21,7 +21,7 @@ def create():
 @auth.admin_required
 def set_default():
     bot_id = request.form.get('bot_id', type=int)
-    result = db.kakaowork_bot.set_default_bot(bot_id)
+    result = db_kakaowork_bot.set_default_bot(bot_id)
     if not result.success:
         return utils.ResultDTO(code=400, message=result.detail, success=False).to_response()
     

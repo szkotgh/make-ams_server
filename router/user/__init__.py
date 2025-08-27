@@ -1,12 +1,12 @@
 from flask import Blueprint, redirect, render_template, request, flash, url_for, session, jsonify
-import db.user
-import db.session
-import db.user_admin
-import db.user_teacher
-import db.user_tracking_class
-import db.user_kakaowork
-import db.user_settings
-import db.qr
+import db.domains.users.account as db_user
+import db.domains.users.sessions as db_session
+import db.domains.users.roles_admin as db_user_admin
+import db.domains.users.roles_teacher as db_user_teacher
+import db.domains.users.class_tracking as db_user_tracking_class
+import db.domains.kakaowork.user_link as db_user_kakaowork
+import db.domains.users.settings as db_user_settings
+import db.domains.auth.qr as db_qr
 import middleware.auth as auth
 import router.user.link_kakaowork as link_kakaowork
 import router.user.notification_settings as notification_settings
@@ -22,16 +22,16 @@ user_bp.register_blueprint(settings.settings_bp)
 @user_bp.route('/dashboard', methods=['GET'])
 @auth.login_required
 def dashboard():
-    session_info = db.session.get_info(session['session_id'])
-    session_info_list = db.session.get_list_info(session['session_id'])
-    is_admin = db.user_admin.is_admin(session_info.data['user_info']['uuid']).success
-    is_teacher = db.user_teacher.is_teacher(session_info.data['user_info']['uuid']).success
-    this_year_class = db.user_tracking_class.get_this_year_class(session_info.data['user_info']['uuid'])
-    kakaowork_info = db.user_kakaowork.get_info(session_info.data['user_info']['uuid'])
+    session_info = db_session.get_info(session['session_id'])
+    session_info_list = db_session.get_list_info(session['session_id'])
+    is_admin = db_user_admin.is_admin(session_info.data['user_info']['uuid']).success
+    is_teacher = db_user_teacher.is_teacher(session_info.data['user_info']['uuid']).success
+    this_year_class = db_user_tracking_class.get_this_year_class(session_info.data['user_info']['uuid'])
+    kakaowork_info = db_user_kakaowork.get_info(session_info.data['user_info']['uuid'])
     
     notification_settings = None
     if kakaowork_info.success:
-        notification_result = db.user_settings.get_multiple_settings(
+        notification_result = db_user_settings.get_multiple_settings(
             session_info.data['user_info']['uuid'], 
             ['notification_login', 'notification_door_access']
         )
@@ -52,10 +52,10 @@ def dashboard():
 @user_bp.route('/qr_code', methods=['POST'])
 @auth.login_required
 def qr_code():
-    session_info = db.session.get_info(session['session_id'])
+    session_info = db_session.get_info(session['session_id'])
     user_uuid = session_info.data['user_info']['uuid']
     
-    gen_qr_result = db.qr.generate_qr(user_uuid)
+    gen_qr_result = db_qr.generate_qr(user_uuid)
     if not gen_qr_result.success:
         return utils.ResultDTO(code=400, message=f"QR 코드 생성 실패: {gen_qr_result.detail}", success=False).to_response()
     
@@ -64,7 +64,7 @@ def qr_code():
 @user_bp.route('/user_list', methods=['GET'])
 @auth.login_required
 def user_list():
-    user_list = db.user.get_all_info()
+    user_list = db_user.get_all_info()
     if not user_list.success:
         return utils.ResultDTO(code=400, message=user_list.detail, success=False).to_response()
     return utils.ResultDTO(code=200, message='유저 목록을 조회했습니다.', data=user_list.data, success=True).to_response()
@@ -72,10 +72,10 @@ def user_list():
 @user_bp.route('/create_class_info', methods=['POST'])
 @auth.login_required
 def create_class_info():
-    session_info = db.session.get_info(session['session_id'])
+    session_info = db_session.get_info(session['session_id'])
     user_uuid = session_info.data['user_info']['uuid']
     
-    is_teacher = db.user_teacher.is_teacher(user_uuid).success
+    is_teacher = db_user_teacher.is_teacher(user_uuid).success
     if is_teacher:
         return jsonify({'success': False, 'detail': '교사 계정은 학급 정보를 생성할 수 없습니다.'})
     
@@ -101,11 +101,11 @@ def create_class_info():
     
     current_year = datetime.now().year
     
-    duplicate_check = db.user_tracking_class.check_duplicate_class(current_year, grade, _class, number)
+    duplicate_check = db_user_tracking_class.check_duplicate_class(current_year, grade, _class, number)
     if duplicate_check.success and duplicate_check.data:
         return jsonify({'success': False, 'detail': '같은 년도에 동일한 학년, 반, 번호를 가진 학생이 이미 존재합니다.'})
     
-    result = db.user_tracking_class.create(user_uuid, current_year, grade, _class, number)
+    result = db_user_tracking_class.create(user_uuid, current_year, grade, _class, number)
     
     if result.success:
         return jsonify({'success': True, 'detail': '학급 정보가 성공적으로 생성되었습니다.'})
@@ -115,14 +115,14 @@ def create_class_info():
 @user_bp.route('/update_class_info', methods=['POST'])
 @auth.login_required
 def update_class_info():
-    session_info = db.session.get_info(session['session_id'])
+    session_info = db_session.get_info(session['session_id'])
     user_uuid = session_info.data['user_info']['uuid']
     
-    is_teacher = db.user_teacher.is_teacher(user_uuid).success
+    is_teacher = db_user_teacher.is_teacher(user_uuid).success
     if is_teacher:
         return jsonify({'success': False, 'detail': '교사 계정은 학급 정보를 업데이트할 수 없습니다.'})
     
-    already_updated = db.user_tracking_class.is_already_updated_this_year(user_uuid)
+    already_updated = db_user_tracking_class.is_already_updated_this_year(user_uuid)
     if already_updated.success and already_updated.data:
         return jsonify({'success': False, 'detail': '올해 이미 학급 정보를 업데이트했습니다.'})
     
@@ -146,7 +146,7 @@ def update_class_info():
     if not (1 <= number <= 30):
         return jsonify({'success': False, 'detail': '번호는 1~30 사이의 값이어야 합니다.'})
     
-    year_update_check = db.user_tracking_class.check_year_update_needed(user_uuid)
+    year_update_check = db_user_tracking_class.check_year_update_needed(user_uuid)
     if not year_update_check.success or not year_update_check.data:
         return jsonify({'success': False, 'detail': '학급 정보 업데이트가 필요하지 않습니다.'})
     
@@ -159,11 +159,11 @@ def update_class_info():
     
     current_year = datetime.now().year
     
-    duplicate_check = db.user_tracking_class.check_duplicate_class(current_year, grade, _class, number)
+    duplicate_check = db_user_tracking_class.check_duplicate_class(current_year, grade, _class, number)
     if duplicate_check.success and duplicate_check.data:
         return jsonify({'success': False, 'detail': '같은 년도에 동일한 학년, 반, 번호를 가진 학생이 이미 존재합니다.'})
     
-    result = db.user_tracking_class.update_for_new_year(
+    result = db_user_tracking_class.update_for_new_year(
         user_uuid, current_year, grade, _class, number, False
     )
     
@@ -175,18 +175,18 @@ def update_class_info():
 @user_bp.route('/update_graduation', methods=['POST'])
 @auth.login_required
 def update_graduation():
-    session_info = db.session.get_info(session['session_id'])
+    session_info = db_session.get_info(session['session_id'])
     user_uuid = session_info.data['user_info']['uuid']
     
-    is_teacher = db.user_teacher.is_teacher(user_uuid).success
+    is_teacher = db_user_teacher.is_teacher(user_uuid).success
     if is_teacher:
         return jsonify({'success': False, 'detail': '교사 계정은 졸업 상태를 업데이트할 수 없습니다.'})
     
-    already_updated = db.user_tracking_class.is_already_updated_this_year(user_uuid)
+    already_updated = db_user_tracking_class.is_already_updated_this_year(user_uuid)
     if already_updated.success and already_updated.data:
         return jsonify({'success': False, 'detail': '올해 이미 졸업 상태를 업데이트했습니다.'})
     
-    year_update_check = db.user_tracking_class.check_year_update_needed(user_uuid)
+    year_update_check = db_user_tracking_class.check_year_update_needed(user_uuid)
     if not year_update_check.success or not year_update_check.data:
         return jsonify({'success': False, 'detail': '졸업 상태 업데이트가 필요하지 않습니다.'})
     
@@ -195,7 +195,7 @@ def update_graduation():
     
     current_year = datetime.now().year
     
-    result = db.user_tracking_class.update_for_new_year(
+    result = db_user_tracking_class.update_for_new_year(
         user_uuid, current_year, None, None, None, True
     )
     
@@ -207,18 +207,33 @@ def update_graduation():
 @user_bp.route('/all_logout', methods=['GET'])
 @auth.login_required
 def all_logout():
-    result = db.user.logout_all(session['session_id'])
+    result = db_user.logout_all(session['session_id'])
     if not result.success:
         flash(result.detail, 'danger')
         return redirect(url_for('router.user.dashboard'))
 
-    return redirect(url_for('router.user.signin'))
+    session.clear()
+    
+    # 응답 생성
+    response = redirect(url_for('router.user.signin'))
+    
+    # QR 관련 쿠키 삭제 (도메인과 경로 명시)
+    response.delete_cookie('qr_code_data', path='/', domain=None)
+    response.delete_cookie('qr_issue_time', path='/', domain=None)
+    
+    # 추가 보안을 위한 일반적인 세션 관련 쿠키들도 삭제
+    response.delete_cookie('session', path='/', domain=None)
+    response.delete_cookie('csrf_token', path='/', domain=None)
+    response.delete_cookie('remember_token', path='/', domain=None)
+    
+    flash('모든 세션에서 로그아웃되었습니다.', 'success')
+    return response
 
 @user_bp.route('/remote_logout', methods=['POST'])
 @auth.login_required
 def remote_logout():
     session_index = request.form.get('index', type=int)
-    session_list_info = db.session.get_list_info(session['session_id'])
+    session_list_info = db_session.get_list_info(session['session_id'])
     if not session_list_info.data:
         return utils.ResultDTO(code=400, message='세션 정보를 찾을 수 없습니다.', success=False).to_response()
     
@@ -229,7 +244,7 @@ def remote_logout():
     if not target_session:
         return utils.ResultDTO(code=400, message='세션 정보를 찾을 수 없습니다.', success=False).to_response()
 
-    result = db.user.logout(target_session['id'])
+    result = db_user.logout(target_session['id'])
     if not result.success:
         return utils.ResultDTO(code=400, message=result.detail, success=False).to_response()
 
@@ -242,13 +257,24 @@ def logout():
         session_id = session.get('session_id')
     else:
         session_id = request.args.get('session_id', type=str)
-    result = db.user.logout(session_id)
+    result = db_user.logout(session_id)
     if not result.success:
         flash(result.detail, 'danger')
         return redirect(url_for('router.index'))
 
-    session.pop('session_id', None)
-    return redirect(url_for('router.user.signin'))
+    session.clear()
+    
+    response = redirect(url_for('router.user.signin'))
+    
+    response.delete_cookie('qr_code_data', path='/', domain=None)
+    response.delete_cookie('qr_issue_time', path='/', domain=None)
+    
+    response.delete_cookie('session', path='/', domain=None)
+    response.delete_cookie('csrf_token', path='/', domain=None)
+    response.delete_cookie('remember_token', path='/', domain=None)
+    
+    flash('로그아웃되었습니다.', 'success')
+    return response
 
 @user_bp.route('/signin', methods=['GET', 'POST'])
 @auth.not_login_required
@@ -257,7 +283,7 @@ def signin():
         id = request.form.get('id', type=str)
         password = request.form.get('password', type=str)
         user_agent = request.headers.get('User-Agent', 'Unknown', type=str)
-        result = db.user.login(id, password, user_agent)
+        result = db_user.login(id, password, user_agent)
         if not result.success:
             flash(result.detail, 'danger')
             return render_template('user/signin.html')
@@ -273,7 +299,7 @@ def signup():
     if request.method == 'POST':
         # Teacher Signup
         if request.form.get('role') == 'teacher':
-            result = db.user.create_teacher(
+            result = db_user.create_teacher(
                 id=request.form.get('id', type=str),
                 password=request.form.get('password', type=str),
                 name=request.form.get('name', type=str)
@@ -284,13 +310,35 @@ def signup():
         
         # Normal Signup
         else:
-            result = db.user.create(
+            # 클라이언트 측 유효성 검사 강화
+            grade = request.form.get('grade', type=int)
+            _class = request.form.get('class', type=int)
+            number = request.form.get('number', type=int)
+            
+            # 학년, 반, 번호 유효성 검사
+            if not grade or not _class or not number:
+                flash('학년, 반, 번호를 모두 입력해주세요.', 'danger')
+                return render_template('user/signup.html')
+            
+            if not (1 <= grade <= 3):
+                flash('학년은 1~3 사이의 값이어야 합니다.', 'danger')
+                return render_template('user/signup.html')
+            
+            if not (1 <= _class <= 10):
+                flash('반은 1~10 사이의 값이어야 합니다.', 'danger')
+                return render_template('user/signup.html')
+            
+            if not (1 <= number <= 30):
+                flash('번호는 1~30 사이의 값이어야 합니다.', 'danger')
+                return render_template('user/signup.html')
+            
+            result = db_user.create(
                 id=request.form.get('id', type=str),
                 password=request.form.get('password', type=str),
                 name=request.form.get('name', type=str),
-                grade=request.form.get('grade', type=int),
-                _class=request.form.get('class', type=int),
-                number=request.form.get('number', type=int)
+                grade=grade,
+                _class=_class,
+                number=number
             )
             if not result.success:
                 flash(result.detail, 'danger')

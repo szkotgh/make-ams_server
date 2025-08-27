@@ -322,3 +322,18 @@ This approach covers most cases I have in my practice. Show your DevOp how to us
 Also `local.cfg` is ignored in `.gitignore` so you will not accidentally put your database passwords to a public repository.
 
 ## `app.py` — cornerstone part of your application
+
+## Database configuration
+
+- 기본 저장소는 SQLite이며 파일 경로 기본값은 `./db/database.db` 입니다.
+- 환경변수 `DATABASE_PATH` 로 DB 파일 경로를 변경할 수 있습니다.
+
+예시:
+
+```sh
+export DATABASE_PATH=/var/data/make-ams/database.db
+python app.py
+```
+
+참고:
+- 연결 시 `PRAGMA foreign_keys = ON;` 를 적용해 외래키 제약을 활성화합니다.
