@@ -1,0 +1,329 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class="container mt-4">
+    <!-- Breadcrumb Navigation -->
+    <nav class="mb-4" style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item display-6"><a href="/">홈</a></li>
+            <li class="breadcrumb-item active display-6" aria-current="page">관리자</li>
+        </ol>
+    </nav>
+    
+    <div class="row">
+        <!-- Sidebar Navigation -->
+        <div class="col-12 col-lg-3 mb-3 mb-lg-0">
+            <div class="list-group" id="sidebar-nav" role="tablist">
+                <a class="list-group-item list-group-item-action active" 
+                   id="auth-management-tab" 
+                   data-bs-toggle="list" 
+                   href="#auth-management" 
+                   role="tab" 
+                   aria-controls="auth-management">
+                    인증상태 관리
+                </a>
+                <a class="list-group-item list-group-item-action" 
+                   id="setting2-tab" 
+                   data-bs-toggle="list" 
+                   href="#setting2" 
+                   role="tab" 
+                   aria-controls="setting2">
+                    설정2
+                </a>
+                <a class="list-group-item list-group-item-action" 
+                   id="setting3-tab" 
+                   data-bs-toggle="list" 
+                   href="#setting3" 
+                   role="tab" 
+                   aria-controls="setting3">
+                    설정3
+                </a>
+                <a class="list-group-item list-group-item-action" 
+                   id="setting4-tab" 
+                   data-bs-toggle="list" 
+                   href="#setting4" 
+                   role="tab" 
+                   aria-controls="setting4">
+                    설정4
+                </a>
+                <a class="list-group-item list-group-item-action" 
+                   id="kw-bot-tab" 
+                   data-bs-toggle="list" 
+                   href="#kw-bot" 
+                   role="tab" 
+                   aria-controls="kw-bot">
+                    KW 봇 설정
+                </a>
+                <a class="list-group-item list-group-item-action" 
+                   id="logout-tab" 
+                   data-bs-toggle="list" 
+                   href="#logout" 
+                   role="tab" 
+                   aria-controls="logout">
+                    로그아웃
+                </a>
+            </div>
+        </div>
+        
+        <!-- Main Content Area -->
+        <div class="col-12 col-lg-8">
+            <div class="tab-content" id="main-content">
+                <!-- 인증상태 관리 탭 -->
+                <div class="tab-pane fade show active" 
+                     id="auth-management" 
+                     role="tabpanel" 
+                     aria-labelledby="auth-management-tab">
+                    <h3 class="h4 h-lg-3">인증상태 관리</h3>
+                    <hr>
+                    <div class="table-responsive">
+                        <!-- 인증상태 관리 내용이 들어갈 자리 -->
+                    </div>
+                </div>
+                
+                <!-- 설정2 탭 -->
+                <div class="tab-pane fade" 
+                     id="setting2" 
+                     role="tabpanel" 
+                     aria-labelledby="setting2-tab">
+                    <h3 class="h4 h-lg-3">설정2</h3>
+                    <hr>
+                    <!-- 설정2 내용이 들어갈 자리 -->
+                </div>
+                
+                <!-- 설정3 탭 -->
+                <div class="tab-pane fade" 
+                     id="setting3" 
+                     role="tabpanel" 
+                     aria-labelledby="setting3-tab">
+                    <h3 class="h4 h-lg-3">설정3</h3>
+                    <hr>
+                    <!-- 설정3 내용이 들어갈 자리 -->
+                </div>
+
+                <!-- 설정4 탭 -->
+                <div class="tab-pane fade" 
+                     id="setting4" 
+                     role="tabpanel" 
+                     aria-labelledby="setting4-tab">
+                    <h3 class="h4 h-lg-3">설정4</h3>
+                    <hr>
+                    <!-- 설정4 내용이 들어갈 자리 -->
+                </div>
+                
+                <!-- KW 봇 설정 탭 -->
+                <div class="tab-pane fade" 
+                     id="kw-bot" 
+                     role="tabpanel" 
+                     aria-labelledby="kw-bot-tab">
+                    <h3 class="h4 h-lg-3">카카오워크 봇 설정</h3>
+                    <hr>
+                    
+                    <!-- 봇 목록 표시 -->
+                    <div id="bot-list">
+                        {% for bot in bot_list %}
+                        <div class="card hstack gap-2 mb-2">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    {{ bot.name }}
+                                    {% if bot.is_default %}
+                                        <span class="badge text-bg-primary">기본 봇</span>
+                                    {% endif %}
+                                </h5>
+                            </div>
+                            {% if not bot.is_default %}
+                                <div class="ms-auto">
+                                    <button class="btn btn-outline-primary m-2" 
+                                            onclick="setDefaultBot({{ bot.id }})">
+                                        기본 봇으로 설정
+                                    </button>
+                                </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="createBot()">
+                        카카오워크 봇 생성
+                    </button>
+                </div>
+
+                <!-- 로그아웃 탭 -->
+                <div class="tab-pane fade" 
+                     id="logout" 
+                     role="tabpanel" 
+                     aria-labelledby="logout-tab">
+                    <h3 class="h4 h-lg-3">로그아웃</h3>
+                    <hr>
+                    <button class="btn btn-danger" onclick="logout()">
+                        로그아웃
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// 상수 정의
+const CONSTANTS = {
+    SELECTORS: {
+        TAB_ELEMENTS: '[data-bs-toggle="list"]',
+        SIDEBAR_NAV: '#sidebar-nav',
+        MAIN_CONTENT: '#main-content'
+    },
+    MESSAGES: {
+        LOGOUT_CONFIRM: '로그아웃 하시겠습니까?',
+        SET_DEFAULT_CONFIRM: '기본 봇으로 설정하시겠습니까? 이제부터 카카오계정 연동 시 해당 봇으로 설정됩니다.',
+        CREATE_BOT_CONFIRM: '카카오워크 봇을 생성하시겠습니까?\n생성한 봇은 삭제할 수 없습니다.',
+        BOT_NAME_PROMPT: '봇 이름을 입력해주세요.',
+        BOT_APP_KEY_PROMPT: 'App Key를 입력해주세요.',
+        CANCELLED: '취소되었습니다.',
+        REQUEST_ERROR: '요청 처리 중 오류가 발생했습니다.'
+    }
+};
+
+// 탭 관리 클래스
+class TabManager {
+    constructor() {
+        this.tabElements = document.querySelectorAll(CONSTANTS.SELECTORS.TAB_ELEMENTS);
+        this.init();
+    }
+
+    init() {
+        this.setupEventListeners();
+        this.handleInitialHash();
+    }
+
+    setupEventListeners() {
+        // 해시 변경 이벤트 리스너
+        window.addEventListener('hashchange', () => this.switchToTabByHash());
+        
+        // 탭 클릭 이벤트 리스너
+        this.tabElements.forEach(tab => {
+            tab.addEventListener('click', (e) => this.handleTabClick(e));
+        });
+    }
+
+    handleInitialHash() {
+        if (window.location.hash) {
+            this.switchToTabByHash();
+        }
+    }
+
+    switchToTabByHash() {
+        const hash = window.location.hash;
+        if (hash) {
+            const targetTab = document.querySelector(`[href="${hash}"]`);
+            if (targetTab) {
+                const tab = new bootstrap.Tab(targetTab);
+                tab.show();
+            }
+        }
+    }
+
+    handleTabClick(event) {
+        const href = event.target.getAttribute('href');
+        if (href && href.startsWith('#')) {
+            history.pushState(null, null, href);
+        }
+    }
+}
+
+// 봇 관리 클래스
+class BotManager {
+    static async setDefaultBot(botId) {
+        if (!confirm(CONSTANTS.MESSAGES.SET_DEFAULT_CONFIRM)) {
+            return;
+        }
+
+        try {
+            const response = await this.makeRequest(
+                '{{ url_for("router.admin.kw_bot_manage.set_default") }}',
+                { bot_id: botId }
+            );
+
+            alert(response.message);
+            window.location.reload();
+        } catch (error) {
+            console.error('봇 기본 설정 오류:', error);
+            alert(CONSTANTS.MESSAGES.REQUEST_ERROR);
+        }
+    }
+
+    static async createBot() {
+        if (!confirm(CONSTANTS.MESSAGES.CREATE_BOT_CONFIRM)) {
+            return;
+        }
+
+        const botName = prompt(CONSTANTS.MESSAGES.BOT_NAME_PROMPT);
+        if (!botName) {
+            alert(CONSTANTS.MESSAGES.CANCELLED);
+            return;
+        }
+
+        const botAppKey = prompt(CONSTANTS.MESSAGES.BOT_APP_KEY_PROMPT);
+        if (!botAppKey) {
+            alert(CONSTANTS.MESSAGES.CANCELLED);
+            return;
+        }
+
+        try {
+            const response = await this.makeRequest(
+                '{{ url_for("router.admin.kw_bot_manage.create") }}',
+                { bot_name: botName, bot_app_key: botAppKey }
+            );
+
+            if (response.code === 200) {
+                alert(response.message);
+            } else {
+                alert(response.message);
+            }
+            location.reload();
+        } catch (error) {
+            console.error('봇 생성 오류:', error);
+            const errorMessage = error.responseJSON?.message || CONSTANTS.MESSAGES.REQUEST_ERROR;
+            alert(errorMessage);
+        }
+    }
+
+    static makeRequest(url, data) {
+        return new Promise((resolve, reject) => {
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: data,
+                success: resolve,
+                error: reject
+            });
+        });
+    }
+}
+
+// 유틸리티 함수들
+const Utils = {
+    logout() {
+        if (confirm(CONSTANTS.MESSAGES.LOGOUT_CONFIRM)) {
+            window.location.href = '{{ url_for("router.user.logout") }}';
+        }
+    }
+};
+
+// 전역 함수들 (기존 코드와의 호환성을 위해)
+function logout() {
+    Utils.logout();
+}
+
+function setDefaultBot(botId) {
+    BotManager.setDefaultBot(botId);
+}
+
+function createBot() {
+    BotManager.createBot();
+}
+
+// DOM 로드 완료 시 초기화
+document.addEventListener('DOMContentLoaded', function() {
+    new TabManager();
+});
+</script>
+{% endblock %}

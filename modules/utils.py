@@ -2,7 +2,7 @@ from email import utils
 import os
 import uuid
 import hashlib
-import datetime
+from datetime import datetime, timedelta
 import re
 from flask import request
 
@@ -30,15 +30,36 @@ def generate_hash(len: int) -> str:
 def str_to_hash(input_string: str) -> str:
     return hashlib.sha256(input_string.encode()).hexdigest()
 
-def get_now_datetime() -> datetime.datetime:
-    return datetime.datetime.now()
-
 def get_request_ip(): 
     user_ip = request.headers.get("X-Forwarded-For", request.remote_addr).split(",")[0].strip()
     return f'{user_ip}'
 
 def check_password(password: str, hashed_password: str, salt: str) -> bool:
     return str_to_hash(password + salt) == hashed_password
+
+# Datetime
+def get_current_datetime() -> datetime:
+    return datetime.utcnow() + timedelta(hours=9)
+
+def get_current_datetime_str() -> str:
+    return (datetime.utcnow() + timedelta(hours=9)).strftime('%Y-%m-%d %H:%M:%S')
+
+def str_to_datetime(date_str: str) -> datetime:
+    return datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S')
+
+def datetime_to_str(date: datetime) -> str:
+    return date.strftime('%Y-%m-%d %H:%M:%S')
+
+def is_minutes_passed(start_time: str, minutes: int) -> bool:
+    start_dt = str_to_datetime(start_time)
+    target_time = start_dt + timedelta(minutes=minutes)
+    now_time = get_current_datetime()
+    print(now_time, target_time)
+    return now_time > target_time
+
+def get_future_timestamp(days: int = 0, hours: int = 0, minutes: int = 0, seconds: int = 0) -> datetime:
+    future_datetime = get_current_datetime() + timedelta(days=days, hours=hours, minutes=minutes, seconds=seconds)
+    return future_datetime
 
 # regex
 class RegexResultDTO():

@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 from flask import Flask, send_file
 from router import router_bp
+import modules.utils as utils
 
 load_dotenv()
 
@@ -10,27 +11,14 @@ app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
 
 app.register_blueprint(router_bp)
 
-@app.route('/favicon.ico')
-def favicon():
-    return send_file('static/favicon.ico')
+# Error Handler
+@app.errorhandler(404)
+def page_not_found(e):
+    return utils.ResultDTO(404, 'Page not found').to_response()
 
-@app.route('/robots.txt')
-def robots():
-    return send_file('static/robots.txt')
-
-# Manifest and Service Worker
-@app.route('/manifest.webmanifest')
-def manifest():
-    return send_file('static/manifest.webmanifest')
-@app.route('/sw.js')
-def service_worker():
-    return send_file('static/sw.js')
-@app.route('/images/icon-192.png')
-def icon_192():
-    return send_file('static/images/icon-192.png')
-@app.route('/images/icon-512.png')
-def icon_512():
-    return send_file('static/images/icon-512.png')
+@app.errorhandler(405)
+def method_not_allowed(e):
+    return utils.ResultDTO(405, 'Method not allowed').to_response()
 
 if __name__ == '__main__':
     app.run(os.environ['SERVER_IP'], os.environ['SERVER_PORT'], debug=True)

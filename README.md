@@ -1,4 +1,26 @@
-# Flask project template
+# MAKE-AMS Server
+
+`MAKE-AMS Server`는 MAKE-AMS 시스템을 위한 Flask 기반 웹 서버입니다.
+
+## 주요 기능
+
+### 카카오워크 연동
+- **로그인 알림**: 사용자가 로그인할 때마다 카카오워크로 알림 메시지 전송
+- **설정 기반 알림**: 사용자별로 로그인 알림 활성화/비활성화 설정 가능
+- **자동 계정 연동**: 카카오워크 계정과 MAKE-AMS 계정 자동 연결
+- **봇 관리**: 여러 카카오워크 봇 관리 및 기본 봇 설정
+
+### 기타 기능
+- 사용자 인증 및 권한 관리
+- 데이터베이스 마이그레이션
+- 다국어 지원 (i18n)
+- RESTful API
+- 백그라운드 작업 처리 (Celery)
+- 캐싱 시스템
+
+---
+
+## Flask project template
 
 `Flask project template` contains a working example of a Flask project with features:
 
