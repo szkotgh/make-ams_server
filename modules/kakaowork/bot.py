@@ -12,4 +12,4 @@ def bot_info(app_key) -> utils.ResultDTO:
             return utils.ResultDTO(code=400, message="봇 정보를 가져올 수 없습니다.", success=False)
         return utils.ResultDTO(code=200, message="봇 정보를 가져왔습니다.", success=True, data=bot_info)
     except:
-        return utils.ResultDTO(code=400, message="오류가 발생했습니다.", success=False)
+        return utils.ResultDTO(code=400, message="봇 정보를 가져올 수 없습니다.", success=False)

@@ -32,15 +32,10 @@ def set_setting(user_uuid, setting_key, setting_value, setting_type='string') ->
         with db.connect() as conn:
             cursor = conn.cursor()
 
-            if setting_type == 'boolean':
-                value_str = str(setting_value).lower()
-            else:
-                value_str = str(setting_value)
-
             cursor.execute('''
                 INSERT OR REPLACE INTO user_settings (user_uuid, setting_key, setting_value, setting_type, updated_at) 
                 VALUES (?, ?, ?, ?, DATETIME(CURRENT_TIMESTAMP, '+9 hours'))
-            ''', (user_uuid, setting_key, value_str, setting_type))
+            ''', (user_uuid, setting_key, setting_value, setting_type))
 
             return db.DBResultDTO(success=True, detail="설정이 저장되었습니다.")
     except Exception as e:

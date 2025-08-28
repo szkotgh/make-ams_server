@@ -1,4 +1,5 @@
 import db
+import db.domains.users.settings as user_settings
 import db.domains.kakaowork.bot as kakaowork_bot
 import modules.kakaowork.user as kakaowork_user
 import modules.kakaowork.send_message as kakaowork_send_message
@@ -50,8 +51,11 @@ def link_kakaowork_user(user_uuid, email) -> db.DBResultDTO:
         with db.connect() as conn:
             cursor = conn.cursor()
             cursor.execute('INSERT INTO user_link_kakaowork (user_uuid, bot_id, kw_id, kw_name, kw_email) VALUES (?, ?, ?, ?, ?)', (user_uuid, default_bot_info.data['id'], kakaowork_user_info.data['id'], kakaowork_user_info.data['name'], email))
-            db.user_settings.set_setting(user_uuid, 'notification_login', True, 'boolean')
-            db.user_settings.set_setting(user_uuid, 'notification_door_access', True, 'boolean')
+            conn.commit()
+            
+            user_settings.set_setting(user_uuid, 'notification_login', True, 'boolean')
+            user_settings.set_setting(user_uuid, 'notification_door_access', True, 'boolean')
+            
             user_info = db.user.get_info(user_uuid)
             notification_result = kakaowork_send_message.send_link_kakaowork_notification(
                 app_key=default_bot_info.data['app_key'],

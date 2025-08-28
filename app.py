@@ -1,7 +1,7 @@
 import os
 import atexit
 from dotenv import load_dotenv
-from flask import Flask, send_file, jsonify
+from flask import Flask
 from router import router_bp
 import modules.utils as utils
 import db.core as db_core
@@ -11,7 +11,6 @@ load_dotenv()
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
 
-# 세션 보안 설정
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
