@@ -90,21 +90,21 @@
                         <table class="table table-hover">
                             <thead>
                                 <tr>
-                                    <th>OS</th>
-                                    <th>로그인 시간</th>
-                                    <th>로그아웃</th>
+                                    <th style="width: 40%;">로그인 환경</th>
+                                    <th style="width: 35%;">로그인 시간</th>
+                                    <th style="width: 25%;">로그아웃</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for session_list_element in session_list_info %}
                                     {% if session_list_element.is_active %}
                                         <tr>
-                                            <td>
-                                                <div class="text-truncate" style="max-width: 300px;">{{ session_list_element.user_agent }}</div>
+                                            <td style="width: 40%;">
+                                                <div class="text-truncate d-block" style="max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ session_list_element.user_agent }}</div>
                                                 {% if session_list_element.id == session_info.id %}<span class="badge text-bg-success">현재 세션</span>{% endif %}
                                             </td>
-                                            <td>{{ session_list_element.created_at }}</td>
-                                            <td>
+                                            <td style="width: 35%;">{{ session_list_element.created_at }}</td>
+                                            <td style="width: 25%;">
                                                 <button type="button" class="btn btn-danger btn-sm" onclick="remoteLogout({{ loop.index0 }})">로그아웃</button>
                                             </td>
                                         </tr>
@@ -173,6 +173,9 @@
         window.location.hash = targetId;
       });
     });
+
+    // 초기 활성 세션 상태 확인
+    checkAndShowNoActiveSessions();
 
     const hash = window.location.hash;
     if (hash) {
@@ -340,9 +343,44 @@
   }
   function logoutAll() {
     if (confirm("모든 세션을 로그아웃 하시겠습니까?")) {
-      window.location.href = '{{ url_for('router.user.all_logout') }}';
+      $.ajax({
+        url: '{{ url_for('router.user.all_logout') }}',
+        type: 'POST',
+        success: (response) => {
+          if (response.code == 200) {
+            showSuccessToast(response.message);
+            // 즉시 모든 세션을 UI에서 제거
+            removeAllSessionsFromUI();
+          } else {
+            showErrorToast(response.message);
+          }
+        },
+        error: (xhr, status, error) => {
+          showErrorToast('서버 오류가 발생했습니다.');
+          console.error('AJAX Error:', error);
+        }
+      });
     }
   }
+
+  // UI에서 모든 세션 제거하는 함수
+  function removeAllSessionsFromUI() {
+    // 데스크톱 테이블에서 모든 행 제거
+    const desktopTable = document.querySelector('.d-none.d-lg-block tbody');
+    if (desktopTable) {
+      desktopTable.innerHTML = '';
+    }
+
+    // 모바일 카드에서 모든 카드 제거
+    const mobileCards = document.querySelector('.d-lg-none');
+    if (mobileCards) {
+      mobileCards.innerHTML = '';
+    }
+
+    // "활성 세션이 없습니다" 메시지 표시
+    checkAndShowNoActiveSessions();
+  }
+
   function findKakaoworkUser() {
     if (confirm("카카오워크 계정을 연결하시겠습니까?")) {
       const email = prompt("카카오워크 계정 가입 시 입력한 이메일을 입력해주세요.");
@@ -450,18 +488,59 @@
         success: (response) => {
           if (response.code == 200) {
             showSuccessToast(response.message);
+            // 즉시 해당 세션을 UI에서 제거
+            removeSessionFromUI(sessionIndex);
           } else {
             showErrorToast(response.message);
           }
-          setTimeout(() => {
-            window.location.reload();
-          }, 1500);
         },
         error: (xhr, status, error) => {
           showErrorToast('서버 오류가 발생했습니다.');
           console.error('AJAX Error:', error);
         }
       });
+    }
+  }
+
+  // UI에서 세션 제거하는 함수
+  function removeSessionFromUI(sessionIndex) {
+    // 데스크톱 테이블에서 제거
+    const desktopTable = document.querySelector('.d-none.d-lg-block tbody');
+    if (desktopTable) {
+      const rows = desktopTable.querySelectorAll('tr');
+      if (rows[sessionIndex]) {
+        rows[sessionIndex].remove();
+      }
+    }
+
+    // 모바일 카드에서 제거
+    const mobileCards = document.querySelectorAll('.d-lg-none .card');
+    if (mobileCards[sessionIndex]) {
+      mobileCards[sessionIndex].remove();
+    }
+
+    // 활성 세션이 없으면 메시지 표시
+    checkAndShowNoActiveSessions();
+  }
+
+  // 활성 세션이 없을 때 메시지 표시
+  function checkAndShowNoActiveSessions() {
+    const desktopTable = document.querySelector('.d-none.d-lg-block tbody');
+    const mobileCards = document.querySelector('.d-lg-none');
+    
+    if (desktopTable && desktopTable.children.length === 0) {
+      // 데스크톱 테이블에 "활성 세션이 없습니다" 메시지 표시
+      const noSessionsRow = document.createElement('tr');
+      noSessionsRow.innerHTML = '<td colspan="3" class="text-center text-muted">활성 세션이 없습니다.</td>';
+      desktopTable.appendChild(noSessionsRow);
+    }
+    
+    if (mobileCards && mobileCards.children.length === 0) {
+      // 모바일 카드에 "활성 세션이 없습니다" 메시지 표시
+      const noSessionsCard = document.createElement('div');
+      noSessionsCard.className = 'card mb-3';
+      noSessionsCard.innerHTML = '<div class="card-body text-center text-muted">활성 세션이 없습니다.</div>';
+      mobileCards.appendChild(noSessionsCard);
     }
   }
 </script>

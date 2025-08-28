@@ -1,15 +1,31 @@
 {
   "name": "MAKE; AMS",
+  "short_name": "MAKE; AMS",
+  "description": "메이크 출입 관리 시스템",
   "start_url": "/",
-  "display": "fullscreen",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#007bff",
+  "orientation": "portrait",
+  "scope": "/",
   "icons": [
     {
-      "src": "/images/icon-192.png",
+      "src": "/static/icons/icon-96.png",
+      "type": "image/png",
+      "sizes": "96x96"
+    },
+    {
+      "src": "/static/icons/icon-128.png",
+      "type": "image/png",
+      "sizes": "128x128"
+    },
+    {
+      "src": "/static/icons/icon-192.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "/images/icon-512.png",
+      "src": "/static/icons/icon-512.png",
       "type": "image/png",
       "sizes": "512x512"
     }

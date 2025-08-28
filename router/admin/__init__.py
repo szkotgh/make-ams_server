@@ -13,6 +13,8 @@ def index():
     return render_template('admin/dashboard.html', bot_list=bot_list.data)
 
 
+
+
 '''
 전체 유저관리(비밀번호 변경, 유저비활)
 문 상태 변경

@@ -37,7 +37,7 @@ def get_list_info(session_id) -> db.DBResultDTO:
         user_info = db.user.get_info(session_info.data['session_info']['user_uuid'])
         with db.connect() as conn:
             cursor = conn.cursor()
-            cursor.execute('SELECT * FROM user_sessions WHERE user_uuid = ?', (user_info.data['uuid'],))
+            cursor.execute('SELECT * FROM user_sessions WHERE user_uuid = ? AND is_active = True', (user_info.data['uuid'],))
             session_data = cursor.fetchall()
             session_data_list = [dict(row) for row in session_data]
             session_data_list.reverse()

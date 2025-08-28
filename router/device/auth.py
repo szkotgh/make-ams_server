@@ -1,6 +1,7 @@
 from flask import Blueprint, request
 from middleware.auth import auth_device
 import db
+import db.domains.users.account as db_user_account
 import db.domains.auth.nfc as db_nfc
 import db.domains.auth.qr as db_qr
 import db.domains.logs.log as db_log
@@ -38,7 +39,9 @@ def qr_auth():
     if not verifu_result.success:
         return utils.ResultDTO(code=404, message="알 수 없는 QR 코드이거나\n만료/사용된 코드입니다.").to_response()
 
-    return utils.ResultDTO(code=200, message="QR 인증 성공").to_response()
+    user_info = db_user_account.get_info(verifu_result.data['user_uuid'])
+
+    return utils.ResultDTO(code=200, message=f"{user_info.data['name']}님, 환영합니다.").to_response()
 
 @auth_bp.route('/nfc', methods=['POST'])
 @auth_device

@@ -204,30 +204,39 @@ def update_graduation():
     else:
         return jsonify({'success': False, 'detail': result.detail})
 
-@user_bp.route('/all_logout', methods=['GET'])
+@user_bp.route('/all_logout', methods=['GET', 'POST'])
 @auth.login_required
 def all_logout():
-    result = db_user.logout_all(session['session_id'])
-    if not result.success:
-        flash(result.detail, 'danger')
-        return redirect(url_for('router.user.dashboard'))
+    if request.method == 'POST':
+        # AJAX 요청으로 모든 세션 로그아웃
+        result = db_user.logout_all(session['session_id'])
+        if not result.success:
+            return utils.ResultDTO(code=400, message=result.detail, success=False).to_response()
+        
+        return utils.ResultDTO(code=200, message='모든 세션에서 로그아웃되었습니다.', success=True).to_response()
+    else:
+        # GET 요청으로 모든 세션 로그아웃 후 로그인 페이지로 리다이렉트
+        result = db_user.logout_all(session['session_id'])
+        if not result.success:
+            flash(result.detail, 'danger')
+            return redirect(url_for('router.user.dashboard'))
 
-    session.clear()
-    
-    # 응답 생성
-    response = redirect(url_for('router.user.signin'))
-    
-    # QR 관련 쿠키 삭제 (도메인과 경로 명시)
-    response.delete_cookie('qr_code_data', path='/', domain=None)
-    response.delete_cookie('qr_issue_time', path='/', domain=None)
-    
-    # 추가 보안을 위한 일반적인 세션 관련 쿠키들도 삭제
-    response.delete_cookie('session', path='/', domain=None)
-    response.delete_cookie('csrf_token', path='/', domain=None)
-    response.delete_cookie('remember_token', path='/', domain=None)
-    
-    flash('모든 세션에서 로그아웃되었습니다.', 'success')
-    return response
+        session.clear()
+        
+        # 응답 생성
+        response = redirect(url_for('router.user.signin'))
+        
+        # QR 관련 쿠키 삭제 (도메인과 경로 명시)
+        response.delete_cookie('qr_code_data', path='/', domain=None)
+        response.delete_cookie('qr_issue_time', path='/', domain=None)
+        
+        # 추가 보안을 위한 일반적인 세션 관련 쿠키들도 삭제
+        response.delete_cookie('session', path='/', domain=None)
+        response.delete_cookie('csrf_token', path='/', domain=None)
+        response.delete_cookie('remember_token', path='/', domain=None)
+        
+        flash('모든 세션에서 로그아웃되었습니다.', 'success')
+        return response
 
 @user_bp.route('/remote_logout', methods=['POST'])
 @auth.login_required
@@ -290,6 +299,9 @@ def signin():
 
         session['session_id'] = result.data['session_id']
         return redirect(url_for('router.index'))
+
+    if request.cookies.get('skip_welcome', default=False, type=bool) == False:
+        return render_template('welcome.html')
 
     return render_template('user/signin.html')
 

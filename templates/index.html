@@ -126,6 +126,10 @@
     }
   }
 
+  function isDarkMode() {
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+
   function generateQRCode(data) {
     const $qrcodeElement = $("#qrcode");
     if ($qrcodeElement.length === 0) return;
@@ -133,14 +137,28 @@
     $qrcodeElement.empty();
     
     const size = getQRCodeSize();
+    const dark = isDarkMode();
+
+    // 컨테이너 배경을 다크/라이트에 맞춰 설정
+    $qrcodeElement.css('background-color', dark ? '#000000' : '#FFFFFF');
+
     qrcode = new QRCode($qrcodeElement[0], {
       width: size,
       height: size,
-      useSVG: true
+      useSVG: true,
+      colorDark: dark ? '#FFFFFF' : '#000000',   // 다크모드에서는 흰색 코드
+      colorLight: dark ? '#000000' : '#FFFFFF'   // 다크모드에서는 검은 배경
     });
     
     qrcode.makeCode(data);
     qrData = data;
+  }
+
+  // 다크모드 변경 시 QR 코드 재생성
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)')) {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      if (qrData) generateQRCode(qrData);
+    });
   }
 
   function resizeQRCode() {
@@ -355,7 +373,6 @@
           }
         }
       } else {
-        // QR 관련 쿠키만 확인하여 필요시 삭제
         const cookieValue = getCookie(cookieName);
         if (cookieValue && cookieValue.trim() === '') {
           deleteCookie(cookieName);
@@ -365,7 +382,6 @@
   }
 
   $(document).ready(() => {
-    // 만료된 쿠키 정리
     cleanupExpiredCookies();
     
     if (!checkSavedQRCode()) {
