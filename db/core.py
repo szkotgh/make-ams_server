@@ -16,7 +16,7 @@ class DBResultDTO():
 
 
 def _get_db_path() -> str:
-    return os.environ['DATABASE_PATH']
+    return "db/database.db"
 
 
 _thread_local = threading.local()
