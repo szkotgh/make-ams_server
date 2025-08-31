@@ -17,6 +17,35 @@ def get_info(user_uuid) -> db.DBResultDTO:
     except Exception as e:
         return db.DBResultDTO(success=False, detail=str(e))
 
+def get_all_users() -> db.DBResultDTO:
+    try:
+        with db.connect() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT 
+                    uct.year,
+                    uct.grade,
+                    uct.class,
+                    uct.number,
+                    uv.user_uuid,
+                    u.name AS user_name,
+                    uv.status,
+                    uv.reason,
+                    uv.created_at
+                FROM user_verify uv
+                JOIN user_class_tracking uct
+                  ON uv.user_uuid = uct.user_uuid
+                JOIN users u
+                  ON uv.user_uuid = u.uuid
+                ORDER BY uv.created_at DESC
+            ''')
+            rows = cursor.fetchall()
+            user_list = [dict(row) for row in rows]
+            return db.DBResultDTO(success=True, detail="전체 사용자 조회 완료", data=user_list)
+    except Exception as e:
+        return db.DBResultDTO(success=False, detail=str(e))
+
+
 
 def create(user_uuid) -> db.DBResultDTO:
     try:
