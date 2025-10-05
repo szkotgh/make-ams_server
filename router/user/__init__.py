@@ -77,40 +77,31 @@ def create_class_info():
     
     is_teacher = db_user_teacher.is_teacher(user_uuid).success
     if is_teacher:
-        return jsonify({'success': False, 'detail': '교사 계정은 학급 정보를 생성할 수 없습니다.'})
+        return utils.ResultDTO(code=400, message='교사 계정은 학급 정보를 생성할 수 없습니다.').to_response()
     
     data = request.get_json()
-    if not data:
-        return jsonify({'success': False, 'detail': '요청 데이터가 없습니다.'})
+    if not data: return utils.ResultDTO(code=400, message='요청 데이터가 없습니다.').to_response()
     
     grade = data.get('grade')
     _class = data.get('class')
     number = data.get('number')
     
-    if not all([grade, _class, number]):
-        return jsonify({'success': False, 'detail': '학년, 반, 번호를 모두 입력해주세요.'})
-    
-    if not (1 <= grade <= 3):
-        return jsonify({'success': False, 'detail': '학년은 1~3 사이의 값이어야 합니다.'})
-    
-    if not (1 <= _class <= 10):
-        return jsonify({'success': False, 'detail': '반은 1~10 사이의 값이어야 합니다.'})
-    
-    if not (1 <= number <= 30):
-        return jsonify({'success': False, 'detail': '번호는 1~30 사이의 값이어야 합니다.'})
-    
+    if not all([grade, _class, number]): return utils.ResultDTO(code=400, message='누락된 정보를 확인하십시오.').to_response()
+    if not (1 <= grade <= 3):   return utils.ResultDTO(code=400, message='학년은 1~3 사이여야 합니다.').to_response()
+    if not (1 <= _class <= 10): return utils.ResultDTO(code=400, message='반은 1~10 사이여야 합니다.').to_response()
+    if not (1 <= number <= 30): return utils.ResultDTO(code=400, message='번호는 1~30 사이여야 합니다.').to_response()
+
     current_year = datetime.now().year
     
     duplicate_check = db_user_tracking_class.check_duplicate_class(current_year, grade, _class, number)
     if duplicate_check.success and duplicate_check.data:
-        return jsonify({'success': False, 'detail': '같은 년도에 동일한 학년, 반, 번호를 가진 학생이 이미 존재합니다.'})
+        return utils.ResultDTO(code=400, message='같은 년도에 동일한 학년, 반, 번호를 가진 학생이 이미 존재합니다.').to_response()
     
     result = db_user_tracking_class.create(user_uuid, current_year, grade, _class, number)
-    
-    if result.success:
-        return jsonify({'success': True, 'detail': '학급 정보가 성공적으로 생성되었습니다.'})
-    else:
-        return jsonify({'success': False, 'detail': result.detail})
+    if not result.success:
+        return utils.ResultDTO(code=400, message=f"생성에 실패했습니다: {result.detail}").to_response()
+
+    return utils.ResultDTO(code=200, message='학급 정보가 성공적으로 생성되었습니다.', success=True).to_response()
 
 @user_bp.route('/update_class_info', methods=['POST'])
 @auth.login_required
@@ -120,57 +111,50 @@ def update_class_info():
     
     is_teacher = db_user_teacher.is_teacher(user_uuid).success
     if is_teacher:
-        return jsonify({'success': False, 'detail': '교사 계정은 학급 정보를 업데이트할 수 없습니다.'})
-    
-    already_updated = db_user_tracking_class.is_already_updated_this_year(user_uuid)
-    if already_updated.success and already_updated.data:
-        return jsonify({'success': False, 'detail': '올해 이미 학급 정보를 업데이트했습니다.'})
+        return utils.ResultDTO(code=400, message='교사 계정은 학급 정보 업데이트가 불필요합니다.').to_response()
     
     data = request.get_json()
     if not data:
-        return jsonify({'success': False, 'detail': '요청 데이터가 없습니다.'})
+        return utils.ResultDTO(code=400, message='요청 데이터가 없습니다.').to_response()
     
     grade = data.get('grade')
     _class = data.get('class')
     number = data.get('number')
     
     if not all([grade, _class, number]):
-        return jsonify({'success': False, 'detail': '학년, 반, 번호를 모두 입력해주세요.'})
+        return utils.ResultDTO(code=400, message='학년, 반, 번호를 모두 입력해주세요.').to_response()
     
     if not (1 <= grade <= 3):
-        return jsonify({'success': False, 'detail': '학년은 1~3 사이의 값이어야 합니다.'})
+        return utils.ResultDTO(code=400, message='학년은 1~3 사이의 값이어야 합니다.').to_response()
     
     if not (1 <= _class <= 10):
-        return jsonify({'success': False, 'detail': '반은 1~10 사이의 값이어야 합니다.'})
+        return utils.ResultDTO(code=400, message='반은 1~10 사이의 값이어야 합니다.').to_response()
     
     if not (1 <= number <= 30):
-        return jsonify({'success': False, 'detail': '번호는 1~30 사이의 값이어야 합니다.'})
-    
+        return utils.ResultDTO(code=400, message='번호는 1~30 사이의 값이어야 합니다.').to_response()
+        
     year_update_check = db_user_tracking_class.check_year_update_needed(user_uuid)
     if not year_update_check.success or not year_update_check.data:
-        return jsonify({'success': False, 'detail': '학급 정보 업데이트가 필요하지 않습니다.'})
+        return utils.ResultDTO(code=400, message=f'업데이트 실패: {year_update_check.detail}').to_response()
     
     if year_update_check.data.get('needs_graduation'):
-        return jsonify({'success': False, 'detail': '졸업 상태 업데이트가 필요한 계정입니다.'})
+        return utils.ResultDTO(code=400, message='졸업 상태로 업데이트가 필요합니다.').to_response()
     
     expected_grade = year_update_check.data.get('new_grade')
     if grade != expected_grade:
-        return jsonify({'success': False, 'detail': f'올바른 학년은 {expected_grade}학년입니다.'})
+        return utils.ResultDTO(code=400, message=f'해당 계정의 올해 올바른 학년은 {expected_grade}학년입니다.').to_response()
     
     current_year = datetime.now().year
     
     duplicate_check = db_user_tracking_class.check_duplicate_class(current_year, grade, _class, number)
     if duplicate_check.success and duplicate_check.data:
-        return jsonify({'success': False, 'detail': '같은 년도에 동일한 학년, 반, 번호를 가진 학생이 이미 존재합니다.'})
+        return utils.ResultDTO(code=400, message='같은 년도에 동일한 학년, 반, 번호를 가진 학생이 이미 존재합니다.').to_response()
     
-    result = db_user_tracking_class.update_for_new_year(
-        user_uuid, current_year, grade, _class, number, False
-    )
+    result = db_user_tracking_class.update_for_new_year(user_uuid, current_year, grade, _class, number, False)
+    if not result.success:
+        return utils.ResultDTO(code=400, message=f"업데이트에 실패했습니다: {result.detail}").to_response()
     
-    if result.success:
-        return jsonify({'success': True, 'detail': '학급 정보가 성공적으로 업데이트되었습니다.'})
-    else:
-        return jsonify({'success': False, 'detail': result.detail})
+    return utils.ResultDTO(code=200, message='학급 정보가 성공적으로 업데이트되었습니다.').to_response()
 
 @user_bp.route('/update_graduation', methods=['POST'])
 @auth.login_required
@@ -180,29 +164,22 @@ def update_graduation():
     
     is_teacher = db_user_teacher.is_teacher(user_uuid).success
     if is_teacher:
-        return jsonify({'success': False, 'detail': '교사 계정은 졸업 상태를 업데이트할 수 없습니다.'})
-    
-    already_updated = db_user_tracking_class.is_already_updated_this_year(user_uuid)
-    if already_updated.success and already_updated.data:
-        return jsonify({'success': False, 'detail': '올해 이미 졸업 상태를 업데이트했습니다.'})
+        return utils.ResultDTO(code=400, message='교사 계정은 학급 정보 업데이트가 불필요합니다.').to_response()
     
     year_update_check = db_user_tracking_class.check_year_update_needed(user_uuid)
     if not year_update_check.success or not year_update_check.data:
-        return jsonify({'success': False, 'detail': '졸업 상태 업데이트가 필요하지 않습니다.'})
+        return utils.ResultDTO(code=400, message=f'업데이트 실패: {year_update_check.detail}').to_response()
     
     if not year_update_check.data.get('needs_graduation'):
-        return jsonify({'success': False, 'detail': '졸업 상태 업데이트가 필요하지 않습니다.'})
+        return utils.ResultDTO(code=400, message=f'졸업 상태로 업데이트가 불가능합니다. 학년정보를 업데이트하십시오.').to_response()
     
     current_year = datetime.now().year
     
-    result = db_user_tracking_class.update_for_new_year(
-        user_uuid, current_year, None, None, None, True
-    )
+    result = db_user_tracking_class.update_for_new_year(user_uuid, current_year, None, None, None, True)
     
-    if result.success:
-        return jsonify({'success': True, 'detail': '졸업 상태가 성공적으로 업데이트되었습니다.'})
-    else:
-        return jsonify({'success': False, 'detail': result.detail})
+    if not result.success:
+        return utils.ResultDTO(code=400, message=f'업데이트에 실패했습니다: {result.detail}').to_response()
+    return utils.ResultDTO(code=400, message=result.detail).to_response()
 
 @user_bp.route('/all_logout', methods=['GET', 'POST'])
 @auth.login_required
@@ -241,7 +218,7 @@ def all_logout():
 @user_bp.route('/remote_logout', methods=['POST'])
 @auth.login_required
 def remote_logout():
-    session_index = request.form.get('index', type=int)
+    session_index = request.get_json().get('index')
     session_list_info = db_session.get_list_info(session['session_id'])
     if not session_list_info.data:
         return utils.ResultDTO(code=400, message='세션 정보를 찾을 수 없습니다.', success=False).to_response()
@@ -302,7 +279,6 @@ def signin():
 
     if request.cookies.get('skip_welcome', default=False, type=bool) == False:
         return render_template('welcome.html')
-
     return render_template('user/signin.html')
 
 @user_bp.route('/signup', methods=['GET', 'POST'])

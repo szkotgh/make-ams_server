@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block head %}
-<link rel="manifest" href="/manifest.webmanifest" crossorigin="anonymous"/>
+<link rel="manifest" href="/manifest.webmanifest" crossorigin="anonymous" />
 <link rel="apple-touch-icon" href="/images/icon-192.png" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
@@ -11,7 +11,7 @@
     display: inline-block;
     margin: 0 auto;
   }
-  
+
   .qr-overlay {
     position: absolute;
     top: 0;
@@ -26,16 +26,16 @@
     border-radius: 8px;
     transition: all 0.3s ease;
   }
-  
+
   .qr-overlay.hidden {
     opacity: 0;
     pointer-events: none;
   }
-  
+
   .footer-space {
     height: 100px;
   }
-  
+
   .card {
     transition: all 0.3s ease;
   }
@@ -56,29 +56,41 @@
 
 <div class="container mt-4">
   <div class="hstack gap-2 mb-4">
-    <h1>MAKE@AMS</h1>
+    <h1>MAKE@AMS <span class="fs-6 text-secondary">mk2</span></h1>
     <div class="hstack ms-auto gap-2">
       {% if is_admin %}
-        <button class="btn p-0" onclick="window.location.href='{{ url_for('router.admin.index') }}'" title="관리자" style="background: none; border: none; width: 2.5rem; height: 2.5rem; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle;">
-          <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="display: block;">
-            <path fill="none" d="M0 0h24v24H0z"></path>
-            <path d="M17 11c.34 0 .67.04 1 .09V6.27L10.5 3 3 6.27v4.91c0 4.54 3.2 8.79 7.5 9.82.55-.13 1.08-.32 1.6-.55-.69-.98-1.1-2.17-1.1-3.45 0-3.31 2.69-6 6-6z"></path>
-            <path d="M17 13c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 1.38c.62 0 1.12.51 1.12 1.12s-.51 1.12-1.12 1.12-1.12-.51-1.12-1.12.5-1.12 1.12-1.12zm0 5.37c-.93 0-1.74-.46-2.24-1.17.05-.72 1.51-1.08 2.24-1.08s2.19.36 2.24 1.08c-.5.71-1.31 1.17-2.24 1.17z"></path>
-          </svg>
-        </button>
+      <button class="btn p-0" onclick="window.location.href='{{ url_for('router.admin.index') }}'" title="관리자"
+        style="background: none; border: none; width: 2.5rem; height: 2.5rem; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle;">
+        <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" width="100%" height="100%"
+          xmlns="http://www.w3.org/2000/svg" style="display: block;">
+          <path fill="none" d="M0 0h24v24H0z"></path>
+          <path
+            d="M17 11c.34 0 .67.04 1 .09V6.27L10.5 3 3 6.27v4.91c0 4.54 3.2 8.79 7.5 9.82.55-.13 1.08-.32 1.6-.55-.69-.98-1.1-2.17-1.1-3.45 0-3.31 2.69-6 6-6z">
+          </path>
+          <path
+            d="M17 13c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 1.38c.62 0 1.12.51 1.12 1.12s-.51 1.12-1.12 1.12-1.12-.51-1.12-1.12.5-1.12 1.12-1.12zm0 5.37c-.93 0-1.74-.46-2.24-1.17.05-.72 1.51-1.08 2.24-1.08s2.19.36 2.24 1.08c-.5.71-1.31 1.17-2.24 1.17z">
+          </path>
+        </svg>
+      </button>
       {% endif %}
-      
-      <button class="btn p-0" onclick="window.location.href='{{ url_for('router.user.dashboard') }}'" title="대시보드" style="background: none; border: none; width: 2.5rem; height: 2.5rem; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle;">
-        <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="display: block;">
+
+      <button class="btn p-0" onclick="window.location.href='{{ url_for('router.user.dashboard') }}'" title="대시보드"
+        style="background: none; border: none; width: 2.5rem; height: 2.5rem; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle;">
+        <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" width="100%" height="100%"
+          xmlns="http://www.w3.org/2000/svg" style="display: block;">
           <circle cx="12" cy="8" r="4"></circle>
           <path d="M12 14c-4 0-7 2-7 4v2h14v-2c0-2-3-4-7-4z"></path>
         </svg>
       </button>
 
-      <button class="btn p-0" onclick="logout()" title="로그아웃" style="background: none; border: none; width: 2.5rem; height: 2.5rem; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle;">
-        <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="display: block;">
+      <button class="btn p-0" onclick="logout()" title="로그아웃"
+        style="background: none; border: none; width: 2.5rem; height: 2.5rem; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle;">
+        <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" width="100%" height="100%"
+          xmlns="http://www.w3.org/2000/svg" style="display: block;">
           <path d="M16 13v-2H7V8l-5 4 5 4v-3z"></path>
-          <path d="M20 3h-9c-1.103 0-2 .897-2 2v4h2V5h9v14h-9v-4H9v4c0 1.103.897 2 2 2h9c1.103 0 2-.897 2-2V5c0-1.103-.897-2-2-2z"></path>
+          <path
+            d="M20 3h-9c-1.103 0-2 .897-2 2v4h2V5h9v14h-9v-4H9v4c0 1.103.897 2 2 2h9c1.103 0 2-.897 2-2V5c0-1.103-.897-2-2-2z">
+          </path>
         </svg>
       </button>
     </div>
@@ -90,11 +102,11 @@
         <div class="card-body text-center p-4">
           <div class="position-relative mb-3">
             <div id="qrcode" class="qr-container"></div>
-            
+
             <div id="qr-overlay" class="qr-overlay">
               <button id="issue-qr-btn" class="btn btn-primary btn-lg">
                 <i class="bi bi-qr-code me-2"></i>
-                QR코드 발급받기
+                QR코드 발급
               </button>
             </div>
           </div>
@@ -106,15 +118,18 @@
   <div class="footer-space"></div>
 </div>
 
+{% endblock body %}
+
+{% block scripts %}
 <script>
   let NEW_GRADE = 1;
   let qrcode;
   let qrData = null;
-  
+
   function getQRCodeSize() {
     const screenWidth = window.innerWidth;
     const screenHeight = window.innerHeight;
-    
+
     if (screenWidth <= 768) {
       return Math.min(screenWidth * 0.6, 200);
     }
@@ -133,28 +148,28 @@
   function generateQRCode(data) {
     const $qrcodeElement = $("#qrcode");
     if ($qrcodeElement.length === 0) return;
-    
+
     $qrcodeElement.empty();
-    
+
     const size = getQRCodeSize();
     const dark = isDarkMode();
 
-    // 컨테이너 배경을 다크/라이트에 맞춰 설정
-    $qrcodeElement.css('background-color', dark ? '#000000' : '#FFFFFF');
+    // Dark Mode
+    // $qrcodeElement.css('background-color', dark ? '#000000' : '#FFFFFF');
+    $qrcodeElement.css('background-color', dark ? '#FFFFFF' : '#FFFFFF');
 
     qrcode = new QRCode($qrcodeElement[0], {
       width: size,
       height: size,
       useSVG: true,
-      colorDark: dark ? '#FFFFFF' : '#000000',   // 다크모드에서는 흰색 코드
-      colorLight: dark ? '#000000' : '#FFFFFF'   // 다크모드에서는 검은 배경
+      //colorDark: dark ? '#FFFFFF' : '#000000',   // Dark Mode
+      //colorLight: dark ? '#000000' : '#FFFFFF'   // Dark Mode
     });
-    
+
     qrcode.makeCode(data);
     qrData = data;
   }
 
-  // 다크모드 변경 시 QR 코드 재생성
   if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)')) {
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
       if (qrData) generateQRCode(qrData);
@@ -170,30 +185,31 @@
   function issueQRCode() {
     const $issueBtn = $('#issue-qr-btn');
     const $overlay = $('#qr-overlay');
-    
+
     $issueBtn.html('<span class="spinner-border spinner-border-sm me-2"></span>발급 중...').prop('disabled', true);
-    
+
     $.ajax({
-      url: '{{ url_for('router.user.qr_code') }}',
+      url: "{{ url_for('router.user.qr_code') }}",
       type: 'POST',
+      dataType: 'json',
       success: (data) => {
         if (data.code == 200) {
           generateQRCode(`\{${data.data}\}`);
           $overlay.addClass('hidden');
-          showToast('QR코드가 성공적으로 발급되었습니다.', 'success');
-          
+          showSuccessToast('QR코드가 성공적으로 발급되었습니다.');
+
           const issueTime = new Date().getTime();
           setCookie('qr_code_data', data.data, 1);
           setCookie('qr_issue_time', issueTime, 1);
-          
+
           startQRTimer();
         } else {
-          showToast('QR코드 발급에 실패했습니다: ' + (data.message || ''), 'danger');
+          showErrorToast('QR코드 발급에 실패했습니다: ' + (data.message || ''));
         }
       },
       error: (xhr, status, error) => {
         const msg = getErrorMessage(xhr) || 'QR코드 발급 중 오류가 발생했습니다.';
-        showToast(msg, 'danger');
+        showErrorToast(msg);
       },
       complete: () => {
         $issueBtn.html('<i class="bi bi-qr-code me-2"></i>QR코드 발급받기').prop('disabled', false);
@@ -233,7 +249,7 @@
   function getCookie(name) {
     const nameEQ = name + "=";
     const ca = document.cookie.split(';');
-    for(let i = 0; i < ca.length; i++) {
+    for (let i = 0; i < ca.length; i++) {
       let c = ca[i];
       while (c.charAt(0) == ' ') c = c.substring(1, c.length);
       if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
@@ -244,7 +260,7 @@
   function deleteCookie(name) {
     const paths = ['/', '/user', '/admin', '/device'];
     const domains = [null, window.location.hostname, '.' + window.location.hostname];
-    
+
     paths.forEach(path => {
       domains.forEach(domain => {
         let cookieString = name + '=; Path=' + path + '; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
@@ -255,7 +271,7 @@
         document.cookie = cookieString;
       });
     });
-    
+
     document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; Max-Age=0;';
   }
 
@@ -280,10 +296,10 @@
     function updateTimerDisplay() {
       if (remainingTime <= 0) {
         clearInterval(qrTimerDisplay);
-        
+
         deleteCookie('qr_code_data');
         deleteCookie('qr_issue_time');
-        
+
         qrCodeExpired();
         return;
       }
@@ -291,10 +307,10 @@
       const minutes = Math.floor(remainingTime / 60000);
       const seconds = Math.floor((remainingTime % 60000) / 1000);
       const timeText = minutes > 0 ? `${minutes}:${seconds.toString().padStart(2, '0')}` : `${seconds}초`;
-      
+
       const $overlay = $('#qr-overlay');
       const $issueBtn = $('#issue-qr-btn');
-      
+
       if ($overlay.hasClass('hidden')) {
         if ($('#qr-timer').length === 0) {
           $overlay.after(`<div id="qr-timer" class="text-center mt-2">유효기간: <span style="color: #dc3545; font-weight: bold; font-size: 1.1rem;">${timeText}</span></div>`);
@@ -304,7 +320,12 @@
       } else {
         $issueBtn.html(`<i class="bi bi-clock me-2"></i>유효기간: <span style="color: #dc3545; font-weight: bold;">${timeText}</span>`);
       }
-      
+
+      const savedQRData = getCookie('qr_code_data');
+      if (savedQRData) {
+        generateQRCode(`{${savedQRData}}`);
+      }
+
       remainingTime -= 1000;
     }
 
@@ -319,42 +340,42 @@
   function qrCodeExpired() {
     deleteCookie('qr_code_data');
     deleteCookie('qr_issue_time');
-    
+
     const $overlay = $('#qr-overlay');
     const $issueBtn = $('#issue-qr-btn');
-    
+
     $('#qr-timer').remove();
-    
+
     $overlay.removeClass('hidden');
     $issueBtn.html('<i class="bi bi-qr-code me-2"></i>QR코드 발급받기').prop('disabled', false);
-    
+
     generateQRCode('QR_PLACEHOLDER');
-    
-    showToast('QR코드가 만료되었습니다. 새로운 QR코드를 발급받으세요.', 'warning');
+
+    showWarningToast('QR코드가 만료되었습니다.');
   }
 
   function checkSavedQRCode() {
     const savedQRData = getCookie('qr_code_data');
     const savedIssueTime = getCookie('qr_issue_time');
-    
+
     if (savedQRData && savedIssueTime) {
       const issueTime = parseInt(savedIssueTime);
       const now = new Date().getTime();
       const elapsed = now - issueTime;
-      
+
       if (elapsed < 60 * 1000) {
-        generateQRCode(savedQRData);
+        generateQRCode(`{${savedQRData}}`);
         $('#qr-overlay').addClass('hidden');
-        
+
         startQRTimer();
-        
+
         return true;
       } else {
         deleteCookie('qr_code_data');
         deleteCookie('qr_issue_time');
       }
     }
-    
+
     return false;
   }
 
@@ -379,29 +400,47 @@
         }
       }
     });
+    
+    // cookies.forEach(cookieName => {
+    //   if (cookieName === 'qr_issue_time') {
+    //     const issueTime = getCookie(cookieName);
+    //     if (issueTime) {
+    //       const elapsed = now - parseInt(issueTime);
+    //       if (elapsed >= 60 * 1000) {
+    //         deleteCookie('qr_code_data');
+    //         deleteCookie('qr_issue_time');
+    //       }
+    //     }
+    //   } else {
+    //     const cookieValue = getCookie(cookieName);
+    //     if (cookieValue && cookieValue.trim() === '') {
+    //       deleteCookie(cookieName);
+    //     }
+    //   }
+    // });
   }
 
   $(document).ready(() => {
     cleanupExpiredCookies();
-    
+
     if (!checkSavedQRCode()) {
       generateQRCode('QR_PLACEHOLDER');
     }
-    
+
     $('#issue-qr-btn').on('click', issueQRCode);
-    
+
     $(window).on('resize', resizeQRCode);
   });
-  
+
   {% if year_update_needed and year_update_needed.new_grade %}
-  NEW_GRADE = {{ year_update_needed.new_grade }};
+    NEW_GRADE = {{ year_update_needed.new_grade }};
   {% endif %}
 
   $(document).ready(() => {
     {% if is_first_login %}
     showFirstLoginConfirm();
     {% endif %}
-    
+
     {% if year_update_needed %}
     showYearUpdateConfirm();
     {% endif %}
@@ -416,20 +455,18 @@
   function showYearUpdateConfirm() {
     {% if year_update_needed %}
       {% if year_update_needed.needs_graduation %}
-        if (confirm("새로운 학년이 시작되었습니다.\n{% if year_update_needed.last_grade == 3 %}3학년을 졸업하셨습니다.{% else %}졸업 상태로 설정됩니다.{% endif %}\n\n졸업 상태로 업데이트하시겠습니까?")) {
-          updateGraduationStatus();
-        }
+      if (confirm("{% if year_update_needed.last_grade == 3 %}3학년을 졸업하셨습니다.{% else %}졸업 상태로 설정됩니다.{% endif %}\n\n졸업 상태로 업데이트하시겠습니까?")) {
+        updateGraduationStatus();
+      }
       {% elif year_update_needed.new_user %}
-        if (confirm("학급 정보가 등록되지 않았습니다.\n\n학년, 반, 번호를 입력하여 학급 정보를 등록하시겠습니까?")) {
-          showClassInputFormForNewUser();
-        }
+      if (confirm("학급 정보가 등록되지 않았습니다.\n\n학년, 반, 번호를 입력하여 학급 정보를 등록하시겠습니까?")) {
+        showClassInputFormForNewUser();
+      }
       {% elif year_update_needed.new_grade %}
-        if (confirm("새로운 학년이 시작되었습니다.\n{% if year_update_needed.last_grade %}{{ year_update_needed.last_grade }}학년에서 {{ year_update_needed.new_grade }}학년으로 자동으로 진급됩니다.{% else %}{{ year_update_needed.new_grade }}학년으로 자동으로 진급됩니다.{% endif %}\n\n반과 번호를 입력하여 학급 정보를 갱신해주세요.")) {
-          showClassInputForm();
-        }
+      if (confirm("{% if year_update_needed.last_grade %}{{ year_update_needed.last_grade }}학년에서 {{ year_update_needed.new_grade }}학년으로 자동으로 진급됩니다.{% else %}{{ year_update_needed.new_grade }}학년으로 자동으로 진급됩니다.{% endif %}\n\n반과 번호를 입력하여 학급 정보를 갱신해주세요.")) {
+        showClassInputForm();
+      }
       {% endif %}
-    {% else %}
-      console.log('No year update needed - user may be graduated or already updated');
     {% endif %}
   }
 
@@ -444,23 +481,23 @@
         alert('취소되었습니다.');
         return;
       }
-      
+
       classNum = parseInt(_class);
       if (isNaN(classNum) || classNum < 1 || classNum > 10) {
         alert('반은 1~10 사이의 숫자로 입력해주세요.');
         continue;
       }
-      
+
       break;
     }
-    
+
     while (true) {
       const number = prompt(`새로운 ${newGrade}학년 ${classNum}반의 번호를 입력해주세요 (1~30):`);
       if (number === null) {
         alert('취소되었습니다.');
         return;
       }
-      
+
       studentNum = parseInt(number);
       if (isNaN(studentNum) || studentNum < 1 || studentNum > 30) {
         alert('번호는 1~30 사이의 숫자로 입력해주세요.');
@@ -469,7 +506,7 @@
 
       break;
     }
-    
+
     if (confirm(`입력한 정보가 맞습니까?\n\n학년: ${newGrade}학년\n반: ${classNum}반\n번호: ${studentNum}번\n\n이 정보로 학급 정보를 갱신하시겠습니까?`)) {
       updateClassInfo(newGrade, classNum, studentNum);
     } else {
@@ -483,37 +520,37 @@
       alert('취소되었습니다.');
       return;
     }
-    
+
     const gradeNum = parseInt(grade);
     if (isNaN(gradeNum) || gradeNum < 1 || gradeNum > 3) {
       alert('학년은 1~3 사이의 숫자로 입력해주세요.');
       return;
     }
-    
+
     const _class = prompt(`${gradeNum}학년 반을 입력해주세요 (1~10):`);
     if (_class === null) {
       alert('취소되었습니다.');
       return;
     }
-    
+
     const classNum = parseInt(_class);
     if (isNaN(classNum) || classNum < 1 || classNum > 10) {
       alert('반은 1~10 사이의 숫자로 입력해주세요.');
       return;
     }
-    
+
     const number = prompt(`${gradeNum}학년 ${classNum}반 번호를 입력해주세요 (1~30):`);
     if (number === null) {
       alert('취소되었습니다.');
       return;
     }
-    
+
     const studentNum = parseInt(number);
     if (isNaN(studentNum) || studentNum < 1 || studentNum > 30) {
       alert('번호는 1~30 사이의 숫자로 입력해주세요.');
       return;
     }
-    
+
     if (confirm(`입력하신 정보가 맞습니까?\n\n학년: ${gradeNum}학년\n반: ${classNum}반\n번호: ${studentNum}번\n\n이 정보로 학급 정보를 등록하시겠습니까?`)) {
       createClassInfo(gradeNum, classNum, studentNum);
     } else {
@@ -522,151 +559,78 @@
   }
 
   function updateClassInfo(grade, _class, number) {
-    console.log('updateClassInfo called with:', {grade, _class, number});
+    console.log('updateClassInfo called with:', { grade, _class, number });
     $.ajax({
       url: '/user/update_class_info',
-      type: 'POST',
       method: 'POST',
       contentType: 'application/json',
-      dataType: 'json',
       data: JSON.stringify({
         grade: grade,
         class: _class,
         number: number
       }),
-      beforeSend: function(xhr) {
-        console.log('Sending POST request to:', '/user/update_class_info');
-        console.log('Request data:', {grade, _class, number});
-      },
       success: (data) => {
-        console.log('Success response:', data);
-        if (data.success) {
-          alert('학급 정보가 성공적으로 업데이트되었습니다.');
+        if (data.code == 200) {
+          alert('성공적으로 업데이트되었습니다.');
           location.reload();
         } else {
-          alert('학급 정보 업데이트에 실패했습니다: ' + data.detail);
+          alert('업데이트에 실패했습니다: ' + data.message);
         }
       },
       error: (xhr, status, error) => {
-        let errorMessage = '학급 정보 업데이트 중 오류가 발생했습니다.';
-        if (xhr.responseJSON && xhr.responseJSON.message) {
-          errorMessage = xhr.responseJSON.message;
-        } else if (xhr.responseText) {
-          try {
-            const response = JSON.parse(xhr.responseText);
-            if (response.message) {
-              errorMessage = response.message;
-            }
-          } catch (e) {
-          }
-        }
-        
+        let errorMessage = `오류가 발생했습니다: ${xhr.responseJSON.message}`;
+
         alert(errorMessage);
       }
     });
   }
 
   function createClassInfo(grade, _class, number) {
-    console.log('createClassInfo called with:', {grade, _class, number});
+    console.log('createClassInfo called with:', { grade, _class, number });
     $.ajax({
       url: '/user/create_class_info',
-      type: 'POST',
       method: 'POST',
       contentType: 'application/json',
-      dataType: 'json',
       data: JSON.stringify({
         grade: grade,
         class: _class,
         number: number
       }),
-      beforeSend: function(xhr) {
-        console.log('Sending POST request to:', '/user/create_class_info');
-        console.log('Request data:', {grade, _class, number});
-      },
       success: (data) => {
-        console.log('Success response:', data);
-        if (data.success) {
-          alert('학급 정보가 성공적으로 등록되었습니다.');
+        if (data.code == 200) {
+          alert('성공적으로 등록되었습니다.');
           location.reload();
         } else {
-          alert('학급 정보 등록에 실패했습니다: ' + data.detail);
+          alert(`등록에 실패했습니다: ${data.message}`);
         }
       },
       error: (xhr, status, error) => {
-        console.error('AJAX Error Details:');
-        console.error('Status:', status);
-        console.error('error');
-        console.error('Response Text:', xhr.responseText);
-        console.error('Response JSON:', xhr.responseJSON);
-        console.error('Status Code:', xhr.status);
-        console.error('Request Method:', xhr.type);
-        
-        let errorMessage = '학급 정보 등록 중 오류가 발생했습니다.';
-        if (xhr.responseJSON && xhr.responseJSON.message) {
-          errorMessage = xhr.responseJSON.message;
-        } else if (xhr.responseText) {
-          try {
-            const response = JSON.parse(xhr.responseText);
-            if (response.message) {
-              errorMessage = response.message;
-            }
-          } catch (e) {
-            console.log('JSON 파싱 실패:', e);
-          }
-        }
-        
+        let errorMessage = `등록 중 오류가 발생했습니다: ${xhr.responseJSON.message}`;
+
         alert(errorMessage);
       }
     });
   }
 
   function updateGraduationStatus() {
-    console.log('updateGraduationStatus called');
     $.ajax({
       url: '/user/update_graduation',
-      type: 'POST',
       method: 'POST',
       contentType: 'application/json',
-      dataType: 'json',
       data: JSON.stringify({
         action: 'graduation'
       }),
-      beforeSend: function(xhr) {
-        console.log('Sending POST request to:', '/user/update_graduation');
-        console.log('Request data:', {action: 'graduation'});
-      },
       success: (data) => {
-        console.log('Success response:', data);
-        if (data.success) {
-          alert('졸업 정보가 성공적으로 업데이트되었습니다.');
+        if (data.code == 200) {
+          alert('성공적으로 업데이트되었습니다.');
           location.reload();
         } else {
-          alert('졸업 정보 업데이트에 실패했습니다: ' + data.detail);
+          alert('업데이트에 실패했습니다: ' + data.message);
         }
       },
       error: (xhr, status, error) => {
-        console.error('AJAX Error Details:');
-        console.error('Status:', status);
-        console.error('Error:', error);
-        console.error('Response Text:', xhr.responseText);
-        console.error('Response JSON:', xhr.responseJSON);
-        console.error('Status Code:', xhr.status);
-        console.error('Request Method:', xhr.type);
-        
-        let errorMessage = '졸업 정보 업데이트 중 오류가 발생했습니다.';
-        if (xhr.responseJSON && xhr.responseJSON.message) {
-          errorMessage = xhr.responseJSON.message;
-        } else if (xhr.responseText) {
-          try {
-            const response = JSON.parse(xhr.responseText);
-            if (response.message) {
-              errorMessage = response.message;
-            }
-          } catch (e) {
-            console.log('JSON 파싱 실패:', e);
-          }
-        }
-        
+        let errorMessage = `업데이트 중 오류가 발생했습니다: ${xhr.responseJSON.message}`;
+
         alert(errorMessage);
       }
     });
@@ -680,7 +644,7 @@
 
   (() => {
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register('/sw.js').then((registration) => {
+      navigator.serviceWorker.register('/static/sw.js').then((registration) => {
         console.log("sw success:", registration);
       }).catch((err) => {
         console.error("sw fail:", err);
@@ -688,4 +652,4 @@
     }
   })();
 </script>
-{% endblock body %}
+{% endblock scripts %}

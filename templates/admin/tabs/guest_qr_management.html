@@ -1,0 +1,283 @@
+<!-- Guest QR management tab -->
+<div class="tab-pane fade" id="guest-qr-management" role="tabpanel" aria-labelledby="guest-qr-management-tab">
+    <div class="d-flex justify-content-between">
+        <h3 class="h4 h-lg-3">
+            게스트 QR 관리
+        </h3>
+        <div>
+            <button class="btn btn-primary" onclick="createGuestQR()">게스트 QR 생성</button>
+            <button class="btn btn-secondary" onclick="window.location.reload()">새로고침</button>
+        </div>
+    </div>
+    <hr>
+    <!-- Card list -->
+    <div id="guest-qr-list">
+        {% if guest_qr_list.success %}
+            {% if guest_qr_list.data|length == 0 %}
+                <p class="text-center">등록된 게스트 QR가 없습니다.</p>
+            {% endif %}
+            {% for qr in guest_qr_list.data %}
+                <!-- View -->
+                <div class="card hstack gap-2 mb-2">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <h5 class="card-title">
+                                {{ qr.qr_name }}
+                                {% if qr.qr_status == 'active' %} <span class="badge text-bg-success">활성</span>
+                                {% elif qr.qr_status == 'disabled' %} <span class="badge text-bg-secondary">비활성</span>
+                                {% elif qr.qr_status == 'expired' %} <span class="badge text-bg-warning">만료</span>
+                                {% else %} <span class="badge text-bg-secondary">{{qr.qr_status}}</span>
+                                {% endif %}
+                            </h5>
+
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#guestqrmodal-{{qr.qr_id}}">설정</button>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="card-text text-muted">ID: {{ qr.qr_id }}</span>
+                            <span class="card-text text-muted">사용횟수: {{ qr.use_count }} | 생성일: {{ qr.created_at }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Setting -->
+                <div class="modal fade" id="guestqrmodal-{{qr.qr_id}}" tabindex="-1" aria-labelledby="guestqrmodalLabel-{{qr.qr_id}}" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-scrollable">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">게스트 QR 설정</h5>
+                                <button type="button" class="btn-close" tabindex="-1" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div id="guest-qr-form-{{qr.qr_id}}">
+                                    <span>아래 링크를 게스트에게 공유하세요: <a href="https://{{ host_domain }}/guest/qr?code={{ qr.qr_id }}" target="_blank" class="mb-3 d-block">https://{{ host_domain }}/guest/qr?code={{ qr.qr_id }}</a></span>
+
+                                    <div class="mb-2">
+                                        <label for="guest-qr-name-{{qr.qr_id}}" class="col-form-label">별칭</label>
+                                        <input type="text" class="form-control" id="guest-qr-name-{{qr.qr_id}}" value="{{ qr.qr_name }}">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="guest-qr-status-{{qr.qr_id}}" class="col-form-label">QR 상태</label>
+                                        <select class="form-select" id="guest-qr-status-{{qr.qr_id}}">
+                                            <option value="active" {% if qr.card_status == 'active' %}selected{% endif %}>활성</option>
+                                            <option value="disabled" {% if qr.card_status == 'disabled' %}selected{% endif %}>비활성</option>
+                                            <option value="expired" {% if qr.card_status == 'expired' %}selected{% endif %}>만료</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="guest-qr-name-{{qr.qr_id}}" class="col-form-label">사용자 이름</label>
+                                        <input type="text" class="form-control" id="guest-name-{{qr.qr_id}}" value="{{ qr.guest_name }}">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="guest-qr-effective-date-{{qr.qr_id}}" class="col-form-label">발효일</label>
+                                        <input type="datetime-local" class="form-control" id="guest-qr-effective-date-{{qr.qr_id}}" value="{{ qr.effective_date }}">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="guest-qr-expiration-date-{{qr.qr_id}}" class="col-form-label">만료일</label>
+                                        <input type="datetime-local" class="form-control" id="guest-qr-expiration-date-{{qr.qr_id}}" value="{{ qr.expiration_date }}">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="creator-uuid-{{qr.qr_id}}" class="col-form-label">만든사람</label>
+                                        <input type="text" class="form-control readonly" id="creator-uuid-{{qr.qr_id}}" value="{{ qr.creator_uuid }}" readonly tabindex="-1">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="created-at-{{qr.qr_id}}" class="col-form-label">생성일</label>
+                                        <input type="text" class="form-control readonly" id="created-at-{{qr.qr_id}}" value="{{ qr.created_at }}" readonly tabindex="-1">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-danger" onclick="delete_guest_qr('{{qr.qr_id}}')">삭제</button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                                <button type="button" class="btn btn-primary" onclick="guest_qr_config_form_submit('{{qr.qr_id}}')">수정</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            {% endfor %}
+        {% else %}
+            <p>{{guest_qr_list.detail}}</p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function getNowDateStr() {
+    // format: YYYY-MM-DD HH:mm:ss (zero-padded)
+    function pad2(n) { return String(n).padStart(2, '0'); }
+    const now_date = new Date();
+    const y = now_date.getFullYear();
+    const m = pad2(now_date.getMonth() + 1);
+    const d = pad2(now_date.getDate());
+    const hh = pad2(now_date.getHours());
+    const mm = pad2(now_date.getMinutes());
+    const ss = pad2(now_date.getSeconds());
+    return `${y}-${m}-${d} ${hh}:${mm}:${ss}`;
+}
+
+function deleteGuestQR(qr_id) {
+    fetch("/admin/guest/qr", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ qr_id: qr_id })
+    })
+}
+
+// Require Date format: YYYY-MM-DD HH:MM:SS
+const toServerFormat = (v) => {
+    if (!v) return '';
+    let s = v.trim().replace('T', ' ');
+    if (/^\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}$/.test(s)) {
+        s = s + ':00';
+    }
+    return s;
+};
+
+function guest_qr_config_form_submit(qr_id) {
+    const qrName = document.getElementById(`guest-qr-name-${qr_id}`).value;
+    const qrStatus = document.getElementById(`guest-qr-status-${qr_id}`).value;
+    const guestName = document.getElementById(`guest-name-${qr_id}`).value;
+    const effectiveRaw = document.getElementById(`guest-qr-effective-date-${qr_id}`).value;
+    const expirationRaw = document.getElementById(`guest-qr-expiration-date-${qr_id}`).value;
+    
+    const requestData = {
+        qr_id: qr_id,
+        qr_name: qrName,
+        qr_status: qrStatus,
+        guest_name: guestName,
+        effiective_date: toServerFormat(effectiveRaw),
+        expiration_date: toServerFormat(expirationRaw)
+    };
+
+    showLoader();
+    fetch('/admin/guest/qr/config', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.code === 200) {
+            alert(data.message || '업데이트 되었습니다.');
+            const modal = bootstrap.Modal.getInstance(document.getElementById(`guestqrmodal-${qr_id}`));
+            if (modal) modal.hide();
+            location.reload();
+        } else {
+            alert(data.message || '업데이트에 실패했습니다.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('오류가 발생했습니다.');
+    });
+    hideLoader();
+}
+
+function createGuestQR() {
+    let qr_name = prompt("QR 이름(별칭)을 입력해주세요:");
+    if (!qr_name) {
+        alert("취소되었습니다.");
+        return;
+    }
+    let guest_name = prompt("게스트 이름을 입력해주세요:");
+    if (!guest_name) {
+        alert("취소되었습니다.");
+        return;
+    }
+    let effiective_date = prompt("발효일을 입력해주세요:", getNowDateStr());
+    if (!effiective_date) {
+        alert("취소되었습니다.");
+        return;
+    }
+    let expiration_date = prompt("만료일을 입력해주세요:", "2099-12-31 23:59:59");
+    if (!expiration_date) {
+        alert("취소되었습니다.");
+        return;
+    }
+
+    const requestData = {
+        qr_name: qr_name,
+        effiective_date: effiective_date,
+        expiration_date: expiration_date,
+        guest_name: guest_name
+    };
+
+    $.ajax({
+        url: "/admin/guest/qr",
+        method: "POST",
+        contentType: "application/json",
+        data: JSON.stringify(requestData),
+        success: function(data) {
+            alert(data.message || "생성 완료");
+            location.reload();
+        },
+        error: function(xhr, status, error) {
+            console.error(error);
+            alert("생성 실패");
+        }
+    });
+}
+
+function delete_guest_qr(qr_id) {
+    if (!confirm("삭제하시겠습니까?")) return;
+
+    fetch('/admin/guest/qr', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ qr_id })
+    })
+    .then(r => r.json())
+    .then(data => {
+        alert(data.message || '삭제 완료');
+        location.reload();
+    })
+    .catch(err => {
+        console.error(err);
+        alert('삭제 실패');
+    });
+}
+
+function guest_qr_config_form_submit(qr_id) {
+    const qrName = document.getElementById(`guest-qr-name-${qr_id}`).value;
+    const qrStatus = document.getElementById(`guest-qr-status-${qr_id}`).value;
+    const guestName = document.getElementById(`guest-name-${qr_id}`).value;
+    const effectiveDate = document.getElementById(`guest-qr-effective-date-${qr_id}`).value;
+    const expirationDate = document.getElementById(`guest-qr-expiration-date-${qr_id}`).value;
+
+    const requestData = {
+        qr_id: qr_id,
+        qr_status: qrStatus,
+        guest_name: guestName,
+        qr_name: qrName,
+        effiective_date: toServerFormat(effectiveDate),
+        expiration_date: toServerFormat(expirationDate)
+    };
+
+    showLoader();
+    fetch('/admin/guest/qr/config', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.code === 200) {
+            alert(data.message || '업데이트 되었습니다.');
+            const modal = bootstrap.Modal.getInstance(document.getElementById(`guestqrmodal-${qr_id}`));
+            modal.hide();
+            location.reload();
+        } else {
+            alert(data.message || '업데이트에 실패했습니다.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('오류가 발생했습니다.');
+    });
+    hideLoader();
+}
+</script>

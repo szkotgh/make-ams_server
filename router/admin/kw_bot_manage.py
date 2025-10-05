@@ -13,7 +13,7 @@ def create():
     
     result = db_kakaowork_bot.create_bot(bot_name, bot_app_key)
     if not result.success:
-        return utils.ResultDTO(code=400, message=f"봇 생성에 실패했습니다: {result.detail}", success=False).to_response()
+        return utils.ResultDTO(code=400, message=f"생성에 실패했습니다: {result.detail}", success=False).to_response()
     
     return utils.ResultDTO(code=200, message="봇이 생성되었습니다.", success=True).to_response()
 
@@ -23,6 +23,6 @@ def set_default():
     bot_id = request.form.get('bot_id', type=int)
     result = db_kakaowork_bot.set_default_bot(bot_id)
     if not result.success:
-        return utils.ResultDTO(code=400, message=result.detail, success=False).to_response()
+        return utils.ResultDTO(code=400, message=f"설정에 실패했습니다: {result.detail}", success=False).to_response()
     
     return utils.ResultDTO(code=200, message=result.detail, success=True).to_response()

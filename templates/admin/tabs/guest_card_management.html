@@ -1,0 +1,200 @@
+<!-- Guest NFC Card management tab -->
+<div class="tab-pane fade" id="guest-card-management" role="tabpanel" aria-labelledby="guest-card-management-tab">
+    <div class="d-flex justify-content-between">
+        <h3 class="h4 h-lg-3">
+            게스트 NFC 카드 관리
+        </h3>
+        <div>
+            <button class="btn btn-primary" onclick="createGuestNFC()">게스트 카드 생성</button>
+            <button class="btn btn-secondary" onclick="window.location.reload()">새로고침</button>
+        </div>
+    </div>
+    <hr>
+    <!-- Card list -->
+    <div id="guest-nfc-list">
+        {% if guest_nfc_list.success %}
+            {% if guest_nfc_list.data|length == 0 %}
+                <p>등록된 게스트 카드가 없습니다.</p>
+            {% endif %}
+            {% for card in guest_nfc_list.data %}
+                <!-- View -->
+                <div class="card hstack gap-2 mb-2">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <h5 class="card-title">
+                                {{ card.card_name }}
+                                {% if card.card_status == 'active' %} <span class="badge text-bg-success">활성</span>
+                                {% elif card.card_status == 'disabled' %} <span class="badge text-bg-secondary">비활성</span>
+                                {% elif card.card_status == 'lost' %} <span class="badge text-bg-warning">분실</span>
+                                {% elif card.card_status == 'stolen' %} <span class="badge text-bg-danger">도난</span>
+                                {% elif card.card_status == 'blocked' %} <span class="badge text-bg-dark">차단</span>
+                                {% else %} <span class="badge text-bg-secondary">알수없음</span>
+                                {% endif %}
+                            </h5>
+
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#guestnfcmodal-{{card.nfc_id}}">설정</button>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="card-text text-muted">S/N: {{ card.nfc_id }}</span>
+                            <span class="card-text text-muted">사용횟수: {{ card.use_count }} | 생성일: {{ card.created_at }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Setting -->
+                <div class="modal fade" id="guestnfcmodal-{{card.nfc_id}}" tabindex="-1" aria-labelledby="guestnfcmodalLabel-{{card.nfc_id}}" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-scrollable">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">게스트 카드 설정</h5>
+                                <button type="button" class="btn-close" tabindex="-1" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div id="guest-nfc-form-{{card.nfc_id}}">
+                                    <div class="mb-2">
+                                        <label for="nfc-id-{{card.nfc_id}}" class="col-form-label">시리얼번호</label>
+                                        <input type="text" class="form-control" id="nfc-id-{{card.nfc_id}}" value="{{ card.nfc_id }}" tabindex="-1">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="nfc-hash-{{card.nfc_id}}" class="col-form-label">NFC인증값</label>
+                                        <input type="text" class="form-control" id="nfc-hash-{{card.nfc_id}}" value="{{ card.nfc_hash }}">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="card-name-{{card.nfc_id}}" class="col-form-label">카드 이름</label>
+                                        <input type="text" class="form-control" id="card-name-{{card.nfc_id}}" value="{{ card.card_name }}">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="card-status-{{card.nfc_id}}" class="col-form-label">카드 상태</label>
+                                        <select class="form-select" id="card-status-{{card.nfc_id}}">
+                                            <option value="active" {% if card.card_status == 'active' %}selected{% endif %}>활성</option>
+                                            <option value="disabled" {% if card.card_status == 'disabled' %}selected{% endif %}>비활성</option>
+                                            <option value="lost" {% if card.card_status == 'lost' %}selected{% endif %}>분실</option>
+                                            <option value="stolen" {% if card.card_status == 'stolen' %}selected{% endif %}>도난</option>
+                                            <option value="blocked" {% if card.card_status == 'blocked' %}selected{% endif %}>차단됨</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="guest-name-{{card.nfc_id}}" class="col-form-label">사용자 이름</label>
+                                        <input type="text" class="form-control" id="guest-name-{{card.nfc_id}}" value="{{ card.guest_name }}">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="creator-uuid-{{card.nfc_id}}" class="col-form-label">만든사람</label>
+                                        <input type="text" class="form-control readonly" id="creator-uuid-{{card.nfc_id}}" value="{{ card.creator_uuid }}" readonly tabindex="-1">
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="created-at-{{card.nfc_id}}" class="col-form-label">생성일</label>
+                                        <input type="text" class="form-control readonly" id="created-at-{{card.nfc_id}}" value="{{ card.created_at }}" readonly tabindex="-1">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-danger" onclick="delete_guest_nfc('{{card.nfc_id}}')">삭제</button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">취소</button>
+                                <button type="button" class="btn btn-primary" onclick="guest_nfc_config_form_submit('{{card.nfc_id}}')">수정</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            {% endfor %}
+        {% else %}
+            <p>{{guest_nfc_list.detail}}</p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function delete_guest_nfc(nfc_id) {
+    if (!confirm("삭제하시겠습니까?")) return;
+    fetch('/admin/guest/nfc', {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ nfc_id: nfc_id })
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.message || '삭제 완료');
+        location.reload();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('오류가 발생했습니다.');
+    });
+}
+
+function guest_nfc_config_form_submit(nfc_id) {
+    const nfcId = document.getElementById(`nfc-id-${nfc_id}`).value;
+    const nfcHash = document.getElementById(`nfc-hash-${nfc_id}`).value;
+    const cardName = document.getElementById(`card-name-${nfc_id}`).value;
+    const cardStatus = document.getElementById(`card-status-${nfc_id}`).value;
+    const guestName = document.getElementById(`guest-name-${nfc_id}`).value;
+
+    const requestData = {
+        nfc_id: nfc_id,
+        r_nfc_id: nfcId,
+        nfc_hash: nfcHash,
+        card_name: cardName,
+        card_status: cardStatus,
+        guest_name: guestName
+    };
+
+    fetch('/admin/guest/nfc/config', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.code === 200) {
+            alert(data.message || '업데이트 되었습니다.');
+            const modal = bootstrap.Modal.getInstance(document.getElementById(`guestnfcmodal-${nfc_id}`));
+            modal.hide();
+            location.reload();
+        } else {
+            alert(data.message || '업데이트에 실패했습니다.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('오류가 발생했습니다.');
+    });
+}
+
+// Guest NFC Card 생성
+function createGuestNFC() {
+    let card_name = prompt("카드 이름(별칭)을 입력해주세요:");
+    if (!card_name) {
+        alert("취소되었습니다.");
+        return;
+    }
+    let guest_name = prompt("게스트 이름을 입력해주세요:");
+    if (!guest_name) {
+        alert("취소되었습니다.");
+        return;
+    }
+    let card_hash = prompt("카드 해시(uid)를 입력해주세요:");
+    if (!card_hash) {
+        alert("취소되었습니다.");
+        return;
+    }
+
+    fetch("/admin/guest/nfc", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ card_hash: card_hash, card_name: card_name, guest_name: guest_name })
+    })
+    .then(r => r.json())
+    .then(data => {
+        alert(data.message || "생성 완료");
+        location.reload();
+    })
+    .catch(err => {
+        console.error(err);
+        alert("생성 실패");
+    });
+}
+</script>

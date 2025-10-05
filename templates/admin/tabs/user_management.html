@@ -1,0 +1,155 @@
+<!-- 인증상태 관리 탭 -->
+<div class="tab-pane fade" id="user-management" role="tabpanel" aria-labelledby="user-management-tab">
+    <h3 class="h4 h-lg-3">사용자 관리</h3>
+    <hr>
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>인덱스</th>
+                    <th>이름</th>
+                    <th>상태</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in user_list %}
+                <tr class="user-row" data-user='{{ user|tojson|safe }}' style="cursor:pointer;">
+                    <td>{{ loop.index }}</td>
+                    <td>{{ user.user_name }} ({{ "%d%02d%02d"|format(user.grade, user.class, user.number) }})</td>
+                    <td>
+                        <span class="badge 
+                            {% if user.status == 'pending' %} text-bg-warning 
+                            {% elif user.status == 'verified' %} text-bg-success 
+                            {% elif user.status == 'rejected' %} text-bg-danger 
+                            {% elif user.status == 'blocked' %} text-bg-dark {% endif %}">
+                            {{ user.status }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 사용자 상세 모달 -->
+<div class="modal fade" id="userDetailModal" tabindex="-1" aria-labelledby="userDetailModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="userDetailModalLabel">사용자 정보</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+      </div>
+      <div class="modal-body">
+        <p>학번: <span id="modal-user-id"></span></p>
+        <p>이름: <span id="modal-user-name"></span></p>
+        <p>현재 상태: <span id="modal-user-status"></span></p>
+        <p>변경할 상태: 
+          <select id="modal-user-action" class="form-select">
+            <option value="verified">verified</option>
+            <option value="rejected">rejected</option>
+            <option value="blocked">blocked</option>
+          </select>
+        </p>
+        <p>사유: <input type="text" id="modal-user-reason" class="form-control"></p>
+        <p>요청일: <span id="modal-user-created"></span></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+        <button type="button" class="btn btn-primary" onclick="saveUserDetail()">저장</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentUser = null;
+
+function showUserDetail(user) {
+    console.log('showUserDetail 호출됨');
+    console.log('전달받은 user 데이터:', user);
+    currentUser = user;
+    document.getElementById("modal-user-id").innerText = 
+        `${user.grade}${String(user.class).padStart(2,"0")}${String(user.number).padStart(2,"0")}`;
+    document.getElementById("modal-user-name").innerText = user.user_name;
+    document.getElementById("modal-user-status").innerText = user.status;
+    document.getElementById("modal-user-reason").value = user.reason || "";
+    document.getElementById("modal-user-created").innerText = user.created_at;
+    document.getElementById("modal-user-action").value = user.status;
+
+    var myModal = new bootstrap.Modal(document.getElementById('userDetailModal'));
+    myModal.show();
+}
+
+function saveUserDetail() {
+    const newReason = document.getElementById("modal-user-reason").value;
+    const newStatus = document.getElementById("modal-user-action").value;
+
+    fetch("/admin/user-verify/update-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+            user_uuid: currentUser.user_uuid, 
+            status: newStatus,
+            reason: newReason
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        alert(data.detail || "수정 완료");
+        location.reload();
+    })
+    .catch(err => {
+        console.error(err);
+        alert("저장 실패");
+    });
+}
+
+function updateStatus(user_uuid, new_status) {
+    fetch("/admin/user-verify/update-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_uuid: user_uuid, status: new_status })
+    })
+    .then(response => response.json())
+    .then(data => {
+        alert(data.detail);
+        location.reload();
+    })
+    .catch(err => {
+        console.error(err);
+        alert("상태 변경 중 오류가 발생했습니다.");
+    });
+}
+
+function updateReason(user_uuid, new_reason) {
+    fetch('/admin/update_reason', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_uuid: user_uuid, reason: new_reason })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (!data.success) {
+            showErrorToast('수정 실패: ' + data.detail);    
+        } else {
+            showSuccessToast('사유를 수정했습니다.');
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        showErrorToast('사유 수정 중 오류가 발생했습니다.');
+        reloadPage(1500);
+    });
+}
+
+// 사용자 행 클릭 이벤트 리스너
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.user-row').forEach(row => {
+        row.addEventListener('click', () => {
+            const user = JSON.parse(row.dataset.user);
+            showUserDetail(user);
+        });
+    });
+});
+</script>

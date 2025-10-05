@@ -13,7 +13,6 @@ def get_info(device_id) -> db.DBResultDTO:
     except Exception as e:
         return db.DBResultDTO(success=False, detail=str(e))
 
-
 def create_device(device_name) -> db.DBResultDTO:
     device_token = utils.generate_hash(16)
     try:

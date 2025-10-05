@@ -5,6 +5,7 @@ from router.device import device_bp
 from router.admin import admin_bp
 from router.pwa import pwa_bp
 from router.site_asset import site_asset_bp
+from router.guest import guest_bp
 import db.domains.users.sessions as db_session
 import db.domains.users.roles_admin as db_user_admin
 import db.domains.users.roles_teacher as db_user_teacher
@@ -18,6 +19,7 @@ router_bp.register_blueprint(device_bp)
 router_bp.register_blueprint(admin_bp)
 router_bp.register_blueprint(pwa_bp)
 router_bp.register_blueprint(site_asset_bp)
+router_bp.register_blueprint(guest_bp)
 
 @router_bp.route('/', methods=['GET'])
 @auth.login_required

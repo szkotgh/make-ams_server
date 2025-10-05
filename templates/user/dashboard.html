@@ -2,154 +2,163 @@
 
 {% block body %}
 <div class="container mt-4">
-    <div class="mb-4">
-        <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item display-6"><a href="/">홈</a></li>
-                <li class="breadcrumb-item active display-6" aria-current="page">대시보드</li>
-            </ol>
-        </nav>
+  <div class="mb-4">
+    <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item display-6"><a href="/">홈</a></li>
+        <li class="breadcrumb-item active display-6" aria-current="page">대시보드</li>
+      </ol>
+    </nav>
+  </div>
+
+  <hr>
+
+  <div class="row">
+    <div class="col-12 col-lg-3 mb-3 mb-lg-0">
+      <div class="list-group" id="list-tab" role="tablist">
+        <a class="list-group-item list-group-item-action active" id="profile-list" data-bs-toggle="list" href="#profile"
+          role="tab" aria-controls="profile">내 정보</a>
+        <a class="list-group-item list-group-item-action" id="settings-list" data-bs-toggle="list" href="#settings"
+          role="tab" aria-controls="settings">기타 설정</a>
+        <a class="list-group-item list-group-item-action" id="sessions-list" data-bs-toggle="list" href="#sessions"
+          role="tab" aria-controls="sessions">세션 정보</a>
+        <a class="list-group-item list-group-item-action" id="logout-list" data-bs-toggle="list" href="#logout"
+          role="tab" aria-controls="logout">로그아웃</a>
+      </div>
     </div>
-  
-    <hr>
-    
-    <div class="row">
-        <div class="col-12 col-lg-3 mb-3 mb-lg-0">
-            <div class="list-group" id="list-tab" role="tablist">
-                <a class="list-group-item list-group-item-action active" id="profile-list" data-bs-toggle="list" href="#profile" role="tab" aria-controls="profile">내 정보</a>
-                <a class="list-group-item list-group-item-action" id="settings-list" data-bs-toggle="list" href="#settings" role="tab" aria-controls="settings">기타 설정</a>
-                <a class="list-group-item list-group-item-action" id="sessions-list" data-bs-toggle="list" href="#sessions" role="tab" aria-controls="sessions">세션 정보</a>
-                <a class="list-group-item list-group-item-action" id="logout-list" data-bs-toggle="list" href="#logout" role="tab" aria-controls="logout">로그아웃</a>
+
+    <div class="col-12 col-lg-8">
+      <div class="tab-content" id="nav-tabContent">
+        <div class="tab-pane fade show active" id="profile" role="tabpanel" aria-labelledby="profile-list">
+          <h3 class="h4 h-lg-3">내 정보</h3>
+          <hr>
+          <div class="row g-2">
+            <div class="col-12 col-sm-6">
+              <strong>아이디:</strong> {{ user_info.id }}
             </div>
+            <div class="col-12 col-sm-6">
+              <strong>이름:</strong> {{ user_info.name }}
+            </div>
+            <div class="col-12">
+              <strong>인적사항:</strong>
+              {% if not is_teacher and this_year_class %}
+              {% if this_year_class.is_graduated == 0 %}{{ this_year_class.grade }}학년 {{ this_year_class.class }}반 {{
+              this_year_class.number }}번{% else %}졸업{% endif %}
+              {% else %}
+              올해 인적사항이 등록되지 않았습니다.
+              {% endif %}
+            </div>
+            <div class="col-12">
+              <strong>가입일:</strong> {{ user_info.created_at }}
+            </div>
+          </div>
         </div>
-        
-        <div class="col-12 col-lg-8">
-            <div class="tab-content" id="nav-tabContent">
-                <div class="tab-pane fade show active" id="profile" role="tabpanel" aria-labelledby="profile-list">
-                    <h3 class="h4 h-lg-3">내 정보</h3>
-                    <hr>
-                    <div class="row g-2">
-                        <div class="col-12 col-sm-6">
-                            <strong>아이디:</strong> {{ user_info.id }}
-                        </div>
-                        <div class="col-12 col-sm-6">
-                            <strong>이름:</strong> {{ user_info.name }}
-                        </div>
-                        <div class="col-12">
-                            <strong>인적사항:</strong> 
-                            {% if not is_teacher and this_year_class %}
-                                {% if this_year_class.is_graduated == 0 %}{{ this_year_class.grade }}학년 {{ this_year_class.class }}반 {{ this_year_class.number }}번{% else %}졸업{% endif %}
-                            {% else %}
-                                올해 인적사항이 등록되지 않았습니다.
-                            {% endif %}
-                        </div>
-                        <div class="col-12">
-                            <strong>가입일:</strong> {{ user_info.created_at }}
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="settings-list">
-                    <h3 class="h4 h-lg-3">기타 설정</h3>
-                    <hr>
-                    {% if kakaowork_info %}
-                        <strong>카카오워크 계정:</strong> {{ kakaowork_info.kw_name }} ({{ kakaowork_info.kw_email }})
-                        <button class="btn btn-danger btn-sm mt-2" onclick="unlinkKakaowork()">연결 해제</button><br><br>
-                        <strong>카카오워크 알림 설정:</strong>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input notification-toggle" type="checkbox" role="switch" 
-                                   id="loginNotificationToggle" 
-                                   data-type="notification_login"
-                                   {% if notification_settings and notification_settings.notification_login %}checked{% endif %}>
-                            <label class="form-check-label" for="loginNotificationToggle">
-                                로그인 및 보안 알림
-                                <span class="spinner-border spinner-border-sm d-none" id="loginSpinner" role="status"></span>
-                            </label>
-                        </div>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input notification-toggle" type="checkbox" role="switch" 
-                                   id="doorAccessNotificationToggle" 
-                                   data-type="notification_door_access"
-                                   {% if notification_settings and notification_settings.notification_door_access %}checked{% endif %}>
-                            <label class="form-check-label" for="doorAccessNotificationToggle">
-                                출입 발생 알림
-                                <span class="spinner-border spinner-border-sm d-none" id="doorAccessSpinner" role="status"></span>
-                            </label>
-                        </div>
-                        
-                    {% else %}
-                        <strong>카카오워크 계정:</strong> 연결된 카카오워크 계정이 없습니다. <button class="btn btn-primary" onclick="findKakaoworkUser()">카카오워크 계정 연결하기</button>
+
+        <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="settings-list">
+          <h3 class="h4 h-lg-3">기타 설정</h3>
+          <hr>
+          {% if kakaowork_info %}
+            <strong>카카오워크 계정:</strong> {{ kakaowork_info.kw_name }} ({{ kakaowork_info.kw_email }})
+            <button class="btn btn-danger btn-sm mt-2" onclick="unlinkKakaowork()">연결 해제</button><br><br>
+            <strong>카카오워크 알림 설정:</strong>
+            <div class="form-check form-switch">
+              <input class="form-check-input notification-toggle" type="checkbox" role="switch"
+                id="loginNotificationToggle" data-type="notification_login" {% if notification_settings and
+                notification_settings.notification_login %}checked{% endif %}>
+              <label class="form-check-label" for="loginNotificationToggle">
+                로그인 및 보안 알림
+                <span class="spinner-border spinner-border-sm d-none" id="loginSpinner" role="status"></span>
+              </label>
+            </div>
+            <div class="form-check form-switch">
+              <input class="form-check-input notification-toggle" type="checkbox" role="switch"
+                id="doorAccessNotificationToggle" data-type="notification_door_access" {% if notification_settings and
+                notification_settings.notification_door_access %}checked{% endif %}>
+              <label class="form-check-label" for="doorAccessNotificationToggle">
+                출입 발생 알림
+                <span class="spinner-border spinner-border-sm d-none" id="doorAccessSpinner" role="status"></span>
+              </label>
+            </div>
+          {% else %}
+            <strong>카카오워크 계정:</strong> 연결된 카카오워크 계정이 없습니다. <button class="btn btn-primary"
+              onclick="findKakaoworkUser()">카카오워크 계정 연결하기</button>
+          {% endif %}
+        </div>
+
+        <div class="tab-pane fade" id="sessions" role="tabpanel" aria-labelledby="sessions-list">
+          <h3 class="h4 h-lg-3">활성화 세션</h3>
+          <hr>
+
+          <div class="d-none d-lg-block" style="max-height: 500px; overflow-y: auto;">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>로그인 환경</th>
+                  <th>로그인 시간</th>
+                  <th>로그아웃</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for session_list_element in session_list_info %}
+                  {% if session_list_element.is_active %}
+                  <tr>
+                    <td>
+                    {{ session_list_element.user_agent[:32] }}..
+                    {% if session_list_element.id == session_info.id %}
+                      <span class="badge text-bg-success">현재 세션</span>
                     {% endif %}
-                </div>
-                
-                <div class="tab-pane fade" id="sessions" role="tabpanel" aria-labelledby="sessions-list">
-                    <h3 class="h4 h-lg-3">활성화 세션</h3>
-                    <hr>
-                    
-                    <div class="d-none d-lg-block">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th style="width: 40%;">로그인 환경</th>
-                                    <th style="width: 35%;">로그인 시간</th>
-                                    <th style="width: 25%;">로그아웃</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for session_list_element in session_list_info %}
-                                    {% if session_list_element.is_active %}
-                                        <tr>
-                                            <td style="width: 40%;">
-                                                <div class="text-truncate d-block" style="max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ session_list_element.user_agent }}</div>
-                                                {% if session_list_element.id == session_info.id %}<span class="badge text-bg-success">현재 세션</span>{% endif %}
-                                            </td>
-                                            <td style="width: 35%;">{{ session_list_element.created_at }}</td>
-                                            <td style="width: 25%;">
-                                                <button type="button" class="btn btn-danger btn-sm" onclick="remoteLogout({{ loop.index0 }})">로그아웃</button>
-                                            </td>
-                                        </tr>
-                                    {% endif %}
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                    </td>
+                    <td>
+                    {{ session_list_element.created_at }}
+                    </td>
+                    <td>
+                    <button type="button" class="btn btn-danger btn-sm"
+                      onclick="remoteLogout({{ loop.index0 }})">로그아웃</button>
+                    </td>
+                  </tr>
+                  {% endif %}
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="d-lg-none">
+            {% for session_list_element in session_list_info %}
+              {% if session_list_element.is_active %}
+                <div class="card mb-3">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                      <div class="flex-grow-1">
+                        <div class="text-truncate" style="max-width: 100%;">
+                          <strong>OS:</strong> {{ session_list_element.user_agent }}
+                        </div>
+                        {% if session_list_element.id == session_info.id %}
+                          <span class="badge text-bg-success">현재 세션</span>
+                        {% endif %}
+                      </div>
                     </div>
-                    
-                    <div class="d-lg-none">
-                        {% for session_list_element in session_list_info %}
-                            {% if session_list_element.is_active %}
-                                <div class="card mb-3">
-                                    <div class="card-body">
-                                        <div class="d-flex justify-content-between align-items-start mb-2">
-                                            <div class="flex-grow-1">
-                                                <div class="text-truncate" style="max-width: 100%;">
-                                                    <strong>OS:</strong> {{ session_list_element.user_agent }}
-                                                </div>
-                                                {% if session_list_element.id == session_info.id %}
-                                                    <span class="badge text-bg-success">현재 세션</span>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                        <div class="mb-2">
-                                            <strong>로그인 시간:</strong> {{ session_list_element.created_at }}
-                                        </div>
-                                        <button type="button" class="btn btn-danger btn-sm w-100" onclick="remoteLogout({{ loop.index0 }})">로그아웃</button>
-                                    </div>
-                                </div>
-                            {% endif %}
-                        {% endfor %}
+                    <div class="mb-2">
+                      <strong>로그인 시간:</strong> {{ session_list_element.created_at }}
                     </div>
-                    
-                    <button class="btn btn-danger w-lg-auto" onclick="logoutAll()">전체 로그아웃</button>
+                    <button type="button" class="btn btn-danger btn-sm w-100"
+                      onclick="remoteLogout({{ loop.index0 }})">로그아웃</button>
+                  </div>
                 </div>
-                
-                <div class="tab-pane fade" id="logout" role="tabpanel" aria-labelledby="logout-list">
-                    <h3 class="h4 h-lg-3">로그아웃</h3>
-                    <hr>
-                    <button class="btn btn-danger w-100 w-lg-auto" onclick="logout()">로그아웃</button>
-                </div>
-            </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+
+          <button class="btn btn-danger w-lg-auto" onclick="logoutAll()">전체 로그아웃</button>
         </div>
+
+        <div class="tab-pane fade" id="logout" role="tabpanel" aria-labelledby="logout-list">
+          <h3 class="h4 h-lg-3">로그아웃</h3>
+          <hr>
+          <button class="btn btn-danger w-100 w-lg-auto" onclick="logout()">로그아웃</button>
+        </div>
+      </div>
     </div>
+  </div>
 </div>
 
 
@@ -157,11 +166,11 @@
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     forceRefreshNotificationToggles();
-    
+
     const notificationToggles = document.querySelectorAll('.notification-toggle');
-    
+
     notificationToggles.forEach((toggle, index) => {
-      toggle.addEventListener('change', function() {
+      toggle.addEventListener('change', function () {
         updateNotificationSetting(this);
       });
     });
@@ -174,14 +183,13 @@
       });
     });
 
-    // 초기 활성 세션 상태 확인
     checkAndShowNoActiveSessions();
 
     const hash = window.location.hash;
     if (hash) {
       let targetTabId = '';
       let targetTabContentId = '';
-      
+
       if (hash === '#profile') {
         targetTabId = 'profile-list';
         targetTabContentId = 'profile';
@@ -195,18 +203,18 @@
         targetTabId = 'logout-list';
         targetTabContentId = 'logout';
       }
-      
+
       if (targetTabId && targetTabContentId) {
         const targetTab = document.getElementById(targetTabId);
         const targetTabContent = document.getElementById(targetTabContentId);
-        
+
         if (targetTab && targetTabContent) {
           const targetTabInstance = new bootstrap.Tab(targetTab);
           targetTabInstance.show();
-          
+
           document.querySelectorAll('.list-group-item').forEach(tab => tab.classList.remove('active'));
           document.querySelectorAll('.tab-pane').forEach(content => content.classList.remove('show', 'active'));
-          
+
           targetTab.classList.add('active');
           targetTabContent.classList.add('show', 'active');
         }
@@ -217,22 +225,18 @@
   function syncNotificationToggles() {
     const loginToggle = document.getElementById('loginNotificationToggle');
     const doorToggle = document.getElementById('doorAccessNotificationToggle');
-    
+
     if (loginToggle && doorToggle) {
       $.ajax({
-        url: '{{ url_for('router.user.settings.get_settings') }}',
+        url: "{{ url_for('router.user.settings.get_settings') }}",
         type: 'GET',
+        dataType: 'json',
         data: { keys: ['notification_login', 'notification_door_access'] },
-        cache: false,
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        },
         success: (response) => {
           if (response.code == 200) {
             const serverLoginState = Boolean(response.data['notification_login']);
             const serverDoorState = Boolean(response.data['notification_door_access']);
-            
+
             if (loginToggle.checked !== serverLoginState) {
               loginToggle.checked = serverLoginState;
             }
@@ -251,20 +255,20 @@
   function forceRefreshNotificationToggles() {
     const loginToggle = document.getElementById('loginNotificationToggle');
     const doorToggle = document.getElementById('doorAccessNotificationToggle');
-    
+
     if (loginToggle && doorToggle) {
       loginToggle.disabled = true;
       doorToggle.disabled = true;
-      
+
       const originalLoginState = loginToggle.checked;
       const originalDoorState = doorToggle.checked;
-      
+
       syncNotificationToggles();
-      
+
       setTimeout(() => {
         loginToggle.disabled = false;
         doorToggle.disabled = false;
-        
+
         if (loginToggle.checked !== originalLoginState && !loginToggle.disabled) {
           loginToggle.checked = originalLoginState;
         }
@@ -276,33 +280,34 @@
   }
 
   function updateNotificationSetting(toggleElement) {
-    // toggleElement 유효성 검사
     if (!toggleElement || !toggleElement.dataset) {
       return;
     }
-    
+
     const notificationType = toggleElement.dataset.type;
     if (!notificationType) {
       return;
     }
-    
+
     const isEnabled = toggleElement.checked;
     const originalState = toggleElement.checked;
-    
+
     toggleElement.disabled = true;
     showSpinner(notificationType, true);
-    
+
     $.ajax({
-      url: '{{ url_for('router.user.notification_settings.update') }}',
-      type: 'POST',
-      data: { 
-        type: notificationType, 
-        enabled: isEnabled 
-      },
+      url: "{{ url_for('router.user.notification_settings.update') }}",
+      type: 'PATCH',
+      contentType: 'application/json',
+      dataType: 'json',
+      data: JSON.stringify({
+        type: notificationType,
+        enabled: isEnabled
+      }),
       cache: false,
       success: (response) => {
         if (response.code == 200) {
-          showSuccessToast('설정이 업데이트되었습니다.');
+          showSuccessToast(response.message);
           syncNotificationToggles();
         } else {
           toggleElement.checked = originalState;
@@ -310,9 +315,7 @@
         }
       },
       error: (xhr, status, error) => {
-        console.error('설정 업데이트 오류:', xhr.responseText);
         toggleElement.checked = originalState;
-        showErrorToast('서버 오류가 발생했습니다.');
         console.error('AJAX Error:', error);
       },
       complete: () => {
@@ -334,22 +337,19 @@
     }
   }
 
-
-
   function logout() {
     if (confirm("로그아웃 하시겠습니까?")) {
-      window.location.href = '{{ url_for('router.user.logout') }}';
+      window.location.href = "{{ url_for('router.user.logout') }}";
     }
   }
   function logoutAll() {
     if (confirm("모든 세션을 로그아웃 하시겠습니까?")) {
       $.ajax({
-        url: '{{ url_for('router.user.all_logout') }}',
+        url: "{{ url_for('router.user.all_logout') }}",
         type: 'POST',
         success: (response) => {
           if (response.code == 200) {
             showSuccessToast(response.message);
-            // 즉시 모든 세션을 UI에서 제거
             removeAllSessionsFromUI();
           } else {
             showErrorToast(response.message);
@@ -358,106 +358,114 @@
         error: (xhr, status, error) => {
           showErrorToast('서버 오류가 발생했습니다.');
           console.error('AJAX Error:', error);
+        },
+        complete: () => {
+          reloadPage(1500);
         }
       });
     }
   }
 
-  // UI에서 모든 세션 제거하는 함수
   function removeAllSessionsFromUI() {
-    // 데스크톱 테이블에서 모든 행 제거
     const desktopTable = document.querySelector('.d-none.d-lg-block tbody');
     if (desktopTable) {
       desktopTable.innerHTML = '';
     }
 
-    // 모바일 카드에서 모든 카드 제거
     const mobileCards = document.querySelector('.d-lg-none');
     if (mobileCards) {
       mobileCards.innerHTML = '';
     }
 
-    // "활성 세션이 없습니다" 메시지 표시
     checkAndShowNoActiveSessions();
   }
 
   function findKakaoworkUser() {
-    if (confirm("카카오워크 계정을 연결하시겠습니까?")) {
-      const email = prompt("카카오워크 계정 가입 시 입력한 이메일을 입력해주세요.");
-      if (!email) {
-        alert("이메일을 입력해주세요.");
-        return;
-      }
-
-      $.ajax({
-        url: '{{ url_for('router.user.link_kakaowork.check_email') }}',
-        type: 'POST',
-        data: { email: email },
-        success: (response) => {
-          if (response.code == 200) {
-            if (confirm(`카카오워크 계정을 찾았습니다.\n소속: ${response.data.department}(${response.data.responsibility || response.data.position})\n이름: ${response.data.name}\n연결하시겠습니까?`)) {
-              linkKakaowork(email);
-            }
-          } else {
-            alert(response.message);
-          }
-        },
-        error: (xhr, status, error) => {
-          let errorMessage = '처리 중 오류가 발생했습니다.';
-          
-          if (xhr.responseJSON && xhr.responseJSON.message) {
-            errorMessage = xhr.responseJSON.message;
-          } else if (xhr.responseText) {
-            try {
-              const response = JSON.parse(xhr.responseText);
-              if (response.message) {
-                errorMessage = response.message;
-              }
-            } catch (e) {
-            }
-          }
-          
-          alert(errorMessage);
-        }
-      });
+    const email = prompt("카카오워크 계정 가입 시 입력한 이메일을 입력해주세요.");
+    if (!email) {
+      alert("이메일을 입력해주세요.");
+      return;
     }
+
+    $.ajax({
+      url: "{{ url_for('router.user.link_kakaowork.check_email') }}",
+      type: 'POST',
+      contentType: 'application/json',
+      dataType: 'json',
+      data: JSON.stringify({ email: email }),
+      success: (response) => {
+        if (response.code == 200) {
+          if (confirm(`카카오워크 계정을 찾았습니다.\n소속: ${response.data.department}(${response.data.responsibility || response.data.position})\n이름: ${response.data.name}\n연결하시겠습니까?`)) {
+            linkKakaowork(email);
+          }
+        } else {
+          alert(response.message);
+        }
+      },
+      error: (xhr, status, error) => {
+        let errorMessage = '처리 중 오류가 발생했습니다.';
+        
+        if (xhr.responseJSON && xhr.responseJSON.message) {
+          errorMessage = xhr.responseJSON.message;
+        } else if (xhr.responseText) {
+          try {
+            const response = JSON.parse(xhr.responseText);
+            if (response.message) {
+              errorMessage = response.message;
+            }
+          } catch (e) {
+          }
+        }
+
+        alert(errorMessage);
+      }
+    });
   }
   function linkKakaowork(email) {
     $.ajax({
-      url: '{{ url_for('router.user.link_kakaowork.link_kakaowork') }}',
+      url: "{{ url_for('router.user.link_kakaowork.link_kakaowork') }}",
       type: 'POST',
-      data: { email: email },
+      contentType: 'application/json',
+      dataType: 'json',
+      data: JSON.stringify({ email: email }),
       success: (response) => {
         if (response.code == 200) {
           alert("카카오워크 계정을 연결했습니다.");
         } else {
           alert(response.message);
         }
-        window.location.reload();
       },
       error: (xhr, status, error) => {
-          console.log(xhr.responseJSON);
-          alert(xhr.responseJSON.message || '처리 중 오류가 발생했습니다.');
+        console.log(xhr.responseJSON);
+        alert(xhr.responseJSON.message || '처리 중 오류가 발생했습니다.');
+      },
+      complete: () => {
+        reloadPage(0);
       }
     });
   }
 
   function unlinkKakaowork() {
-    if (confirm("카카오워크 계정 연결을 해제하시겠습니까?\n\n연결 해제 시:\n- 카카오워크 알림이 더 이상 발송되지 않습니다\n- 카카오워크 관련 기능 이용이 불가합니다.")) {
+    if (confirm("카카오워크 계정 연결을 해제하시겠습니까?\n\n연결 해제 시:\n- 카카오워크 알림이 더 이상 발송되지 않습니다.\n- 카카오워크 관련 기능 이용이 불가합니다.")) {
       $.ajax({
-        url: '{{ url_for('router.user.link_kakaowork.unlink_kakaowork') }}',
+        url: "{{ url_for('router.user.link_kakaowork.unlink_kakaowork') }}",
         type: 'DELETE',
         success: (response) => {
+          response = JSON.parse(response);
+
           if (response.code == 200) {
-            alert("카카오워크 계정 연결이 해제되었습니다.");
+            alert(response.message);
           } else {
             alert(response.message);
           }
-          window.location.reload();
+          reloadPage(0);
         },
         error: (xhr, status, error) => {
           console.log(xhr.responseJSON);
           alert(xhr.responseJSON.message || '처리 중 오류가 발생했습니다.');
+        },
+        complete: () => {
+          reloadPage(1500);
         }
       });
     }
@@ -466,14 +474,14 @@
   function activateTab(tabId, contentId) {
     const targetTab = document.getElementById(tabId);
     const targetTabContent = document.getElementById(contentId);
-    
+
     if (targetTab && targetTabContent) {
       const targetTabInstance = new bootstrap.Tab(targetTab);
       targetTabInstance.show();
-      
+
       document.querySelectorAll('.list-group-item').forEach(tab => tab.classList.remove('active'));
       document.querySelectorAll('.tab-pane').forEach(content => content.classList.remove('show', 'active'));
-      
+
       targetTab.classList.add('active');
       targetTabContent.classList.add('show', 'active');
     }
@@ -482,13 +490,14 @@
   function remoteLogout(sessionIndex) {
     if (confirm("이 세션을 로그아웃 하시겠습니까?")) {
       $.ajax({
-        url: '{{ url_for('router.user.remote_logout') }}',
+        url: "{{ url_for('router.user.remote_logout') }}",
         type: 'POST',
-        data: { index: sessionIndex },
+        contentType: 'application/json',
+        dataType: 'json',
+        data: JSON.stringify({ index: sessionIndex }),
         success: (response) => {
           if (response.code == 200) {
             showSuccessToast(response.message);
-            // 즉시 해당 세션을 UI에서 제거
             removeSessionFromUI(sessionIndex);
           } else {
             showErrorToast(response.message);
@@ -497,14 +506,14 @@
         error: (xhr, status, error) => {
           showErrorToast('서버 오류가 발생했습니다.');
           console.error('AJAX Error:', error);
+        },
+        complete: () => {
         }
       });
     }
   }
 
-  // UI에서 세션 제거하는 함수
   function removeSessionFromUI(sessionIndex) {
-    // 데스크톱 테이블에서 제거
     const desktopTable = document.querySelector('.d-none.d-lg-block tbody');
     if (desktopTable) {
       const rows = desktopTable.querySelectorAll('tr');
@@ -513,30 +522,25 @@
       }
     }
 
-    // 모바일 카드에서 제거
     const mobileCards = document.querySelectorAll('.d-lg-none .card');
     if (mobileCards[sessionIndex]) {
       mobileCards[sessionIndex].remove();
     }
 
-    // 활성 세션이 없으면 메시지 표시
     checkAndShowNoActiveSessions();
   }
 
-  // 활성 세션이 없을 때 메시지 표시
   function checkAndShowNoActiveSessions() {
     const desktopTable = document.querySelector('.d-none.d-lg-block tbody');
     const mobileCards = document.querySelector('.d-lg-none');
-    
+
     if (desktopTable && desktopTable.children.length === 0) {
-      // 데스크톱 테이블에 "활성 세션이 없습니다" 메시지 표시
       const noSessionsRow = document.createElement('tr');
       noSessionsRow.innerHTML = '<td colspan="3" class="text-center text-muted">활성 세션이 없습니다.</td>';
       desktopTable.appendChild(noSessionsRow);
     }
-    
+
     if (mobileCards && mobileCards.children.length === 0) {
-      // 모바일 카드에 "활성 세션이 없습니다" 메시지 표시
       const noSessionsCard = document.createElement('div');
       noSessionsCard.className = 'card mb-3';
       noSessionsCard.innerHTML = '<div class="card-body text-center text-muted">활성 세션이 없습니다.</div>';

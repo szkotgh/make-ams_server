@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class DBResultDTO():
-    def __init__(self, success: bool, detail: str, data: dict = None):
+    def __init__(self, success: bool, detail: str, data: dict | None = None):
         self.success = success
         self.data = data
         self.detail = detail
@@ -212,5 +212,3 @@ def get_connection_info():
             'active_connections': 0,
             'thread_id': threading.get_ident()
         }
-
-

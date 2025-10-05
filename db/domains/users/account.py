@@ -89,7 +89,6 @@ def logout_all(session_id) -> db.DBResultDTO:
     finally:
         db.close_connection(conn)
 
-
 def get_info(uuid) -> db.DBResultDTO:
     try:
         conn = db.get_connection()
@@ -104,6 +103,24 @@ def get_info(uuid) -> db.DBResultDTO:
     finally:
         db.close_connection(conn)
 
+def get_info_by_session_id(session_id) -> db.DBResultDTO:
+    try:
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM user_sessions WHERE id = ?', (session_id,))
+        user = cursor.fetchone()
+        if not user:
+            return db.DBResultDTO(success=False, detail="User not found")
+        if not user['is_active']:
+            return db.DBResultDTO(success=False, detail="User is not active")
+        user_info = get_info(user['user_uuid'])
+        if not user_info.success:
+            return user_info
+        return db.DBResultDTO(success=True, detail="User found", data=dict(user_info.data))
+    except Exception as e:
+        return db.DBResultDTO(success=False, detail=str(e))
+    finally:
+        db.close_connection(conn)
 
 def get_all_info() -> db.DBResultDTO:
     try:

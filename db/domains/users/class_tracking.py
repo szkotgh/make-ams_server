@@ -60,12 +60,12 @@ def check_year_update_needed(user_uuid) -> db.DBResultDTO:
             cursor.execute('SELECT * FROM user_class_tracking WHERE user_uuid = ? AND year = ?', (user_uuid, now_year))
             current_year_info = cursor.fetchone()
             if current_year_info:
-                return db.DBResultDTO(success=False, detail="Already updated this year", data=None)
+                return db.DBResultDTO(success=False, detail="올해 학급정보가 이미 존재합니다.", data=None)
             
             cursor.execute('SELECT * FROM user_class_tracking WHERE user_uuid = ? AND is_graduated = TRUE ORDER BY year DESC LIMIT 1', (user_uuid,))
             graduation_info = cursor.fetchone()
             if graduation_info:
-                return db.DBResultDTO(success=False, detail="Graduated user - no more updates needed", data=None)
+                return db.DBResultDTO(success=False, detail="졸업한 사용자는 학급정보 업데이트가 불필요합니다.", data=None)
             
             last_year = now_year - 1
             cursor.execute('SELECT * FROM user_class_tracking WHERE user_uuid = ? AND year = ?', (user_uuid, last_year))
@@ -74,19 +74,19 @@ def check_year_update_needed(user_uuid) -> db.DBResultDTO:
                 last_grade = last_year_info['grade']
                 last_is_graduated = last_year_info['is_graduated']
                 if last_grade == 3 or last_is_graduated:
-                    return db.DBResultDTO(success=True, detail="Graduation update needed", data={
+                    return db.DBResultDTO(success=True, detail="졸업 상태로 업데이트가 필요합니다.", data={
                         'last_grade': last_grade,
                         'last_is_graduated': last_is_graduated,
                         'needs_graduation': True
                     })
                 else:
                     new_grade = last_grade + 1
-                    return db.DBResultDTO(success=True, detail="Grade update needed", data={
+                    return db.DBResultDTO(success=True, detail="학급정보 업데이트가 필요합니다.", data={
                         'last_grade': last_grade,
                         'new_grade': new_grade,
                         'needs_graduation': False
                     })
-            return db.DBResultDTO(success=False, detail="No previous year data", data=None)
+            return db.DBResultDTO(success=False, detail="전년도 학급정보를 찾을 수 없습니다.", data=None)
     except Exception as e:
         return db.DBResultDTO(success=False, detail=str(e))
 
@@ -165,7 +165,7 @@ def update_for_new_year(user_uuid, year, grade=None, _class=None, number=None, i
                     INSERT INTO user_class_tracking (user_uuid, year, grade, class, number, is_graduated) 
                     VALUES (?, ?, ?, ?, ?, FALSE)
                 ''', (user_uuid, year, grade, _class, number))
-            return db.DBResultDTO(success=True, detail="New year class tracking updated successfully")
+            return db.DBResultDTO(success=True, detail="정보가 업데이트되었습니다.")
     except Exception as e:
         return db.DBResultDTO(success=False, detail=str(e))
 

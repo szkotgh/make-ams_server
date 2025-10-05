@@ -1,78 +1,69 @@
-<!-- Toast Component -->
 <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer">
-  <!-- Toasts will be dynamically created here -->
 </div>
 
 <script>
-class ToastManager {
-  constructor() {
-    this.toastContainer = document.getElementById('toastContainer');
-    this.maxToasts = 3;
-    this.toastCounter = 0;
-  }
+  class ToastManager {
+    constructor() {
+      this.toastContainer = document.getElementById('toastContainer');
+      this.maxToasts = 3;
+      this.toastCounter = 0;
+    }
 
-  show(message, type = 'info', duration = 5000) {
-    // 최대 3개까지만 허용
-    if (this.toastContainer.children.length >= this.maxToasts) {
-      // 가장 오래된 toast 제거
-      const oldestToast = this.toastContainer.firstChild;
-      if (oldestToast) {
-        oldestToast.remove();
+    show(message, type, duration = 5000) {
+      if (this.toastContainer.children.length >= this.maxToasts) {
+        const oldestToast = this.toastContainer.firstChild;
+        if (oldestToast) {
+          oldestToast.remove();
+        }
+      }
+
+      const toastId = `toast-${++this.toastCounter}`;
+      const toastHtml = this.createToastHtml(toastId, message, type);
+
+      this.toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+
+      const toastElement = document.getElementById(toastId);
+
+      if (typeof bootstrap !== 'undefined' && bootstrap.Toast) {
+        const toast = new bootstrap.Toast(toastElement, {
+          autohide: true,
+          delay: duration
+        });
+        toast.show();
+
+        toastElement.addEventListener('hidden.bs.toast', () => {
+          toastElement.remove();
+        });
+      } else {
+        this.showFallbackToast(message, type, duration);
+        setTimeout(() => {
+          toastElement.remove();
+        }, duration);
       }
     }
 
-    const toastId = `toast-${++this.toastCounter}`;
-    const toastHtml = this.createToastHtml(toastId, message, type);
-    
-    // toast를 container에 추가
-    this.toastContainer.insertAdjacentHTML('beforeend', toastHtml);
-    
-    // toast 요소 가져오기
-    const toastElement = document.getElementById(toastId);
-    
-    // Bootstrap toast 인스턴스 생성 및 표시
-    if (typeof bootstrap !== 'undefined' && bootstrap.Toast) {
-      const toast = new bootstrap.Toast(toastElement, {
-        autohide: true,
-        delay: duration
-      });
-      toast.show();
-      
-      // toast가 숨겨진 후 DOM에서 제거
-      toastElement.addEventListener('hidden.bs.toast', () => {
-        toastElement.remove();
-      });
-    } else {
-      // Bootstrap이 없는 경우 fallback
-      this.showFallbackToast(message, type, duration);
-      setTimeout(() => {
-        toastElement.remove();
-      }, duration);
-    }
-  }
+    createToastHtml(toastId, message, type) {
+      let title, titleClass;
 
-  createToastHtml(toastId, message, type) {
-    let title, titleClass;
-    
-    switch (type) {
-      case 'success':
-        title = '성공';
-        titleClass = 'text-success';
-        break;
-      case 'error':
-        title = '오류';
-        titleClass = 'text-danger';
-        break;
-      case 'warning':
-        title = '경고';
-        titleClass = 'text-warning';
-        break;
-      default:
-        title = '알림';
-        titleClass = '';
-    }
+      switch (type) {
+        case 'success':
+          title = '성공';
+          titleClass = 'text-success';
+          break;
+        case 'error':
+          title = '오류';
+          titleClass = 'text-danger';
+          break;
+        case 'warning':
+          title = '경고';
+          titleClass = 'text-warning';
+          break;
+        default:
+          title = '알림';
+          titleClass = 'text-primary';
+      }
 
-    return `
+      return `
       <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
         <div class="toast-header">
           <strong class="me-auto ${titleClass}">${title}</strong>
@@ -83,50 +74,51 @@ class ToastManager {
         </div>
       </div>
     `;
-  }
+    }
 
-  showFallbackToast(message, type, duration) {
-    // Bootstrap이 없는 경우 alert로 대체
-    if (type === 'error') {
-      alert('오류: ' + message);
-    } else {
-      alert(message);
+    showFallbackToast(message, type, duration) {
+      if (type === 'error') {
+        alert('오류: ' + message);
+      } else {
+        alert(message);
+      }
+    }
+
+    clearAll() {
+      this.toastContainer.innerHTML = '';
+    }
+
+    remove(toastId) {
+      const toast = document.getElementById(toastId);
+      if (toast) {
+        toast.remove();
+      }
     }
   }
 
-  // 모든 toast 제거
-  clearAll() {
-    this.toastContainer.innerHTML = '';
-  }
+  window.toastManager = new ToastManager();
 
-  // 특정 toast 제거
-  remove(toastId) {
-    const toast = document.getElementById(toastId);
-    if (toast) {
-      toast.remove();
+  function showInfoToast(message, duration = 5000) {
+    if (window.toastManager) {
+      window.toastManager.show(message, 'info', duration);
     }
   }
-}
 
-// 전역 toast manager 인스턴스 생성
-window.toastManager = new ToastManager();
-
-// 편의 함수들
-function showToast(message, type = 'info', duration = 5000) {
-  if (window.toastManager) {
-    window.toastManager.show(message, type, duration);
+  function showSuccessToast(message, duration = 5000) {
+    if (window.toastManager) {
+      window.toastManager.show(message, 'success', duration);
+    }
   }
-}
 
-function showSuccessToast(message, duration = 5000) {
-  showToast(message, 'success', duration);
-}
+  function showErrorToast(message, duration = 5000) {
+    if (window.toastManager) {
+      window.toastManager.show(message, 'error', duration);
+    }
+  }
 
-function showErrorToast(message, duration = 5000) {
-  showToast(message, 'error', duration);
-}
-
-function showWarningToast(message, duration = 5000) {
-  showToast(message, 'warning', duration);
-}
+  function showWarningToast(message, duration = 5000) {
+    if (window.toastManager) {
+      window.toastManager.show(message, 'warning', duration);
+    }
+  }
 </script>

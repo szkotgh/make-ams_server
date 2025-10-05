@@ -9,7 +9,7 @@ link_kakaowork_bp = Blueprint('link_kakaowork', __name__, url_prefix='/link_kaka
 @link_kakaowork_bp.route('', methods=['POST'])
 @login_required
 def link_kakaowork():
-    email = request.form.get('email')
+    email = request.get_json().get('email')
     session_info = db_session.get_info(session['session_id'])
     result = db_user_kakaowork.link_kakaowork_user(session_info.data['user_info']['uuid'], email)
     if not result.success:
@@ -20,7 +20,7 @@ def link_kakaowork():
 @link_kakaowork_bp.route('/check_email', methods=['POST'])
 @login_required
 def check_email():
-    email = request.form.get('email')
+    email = request.get_json().get('email')
     result = db_user_kakaowork.find_kakaowork_user(email)
     if not result.success:
         return utils.ResultDTO(code=400, message=result.detail, success=False).to_response()

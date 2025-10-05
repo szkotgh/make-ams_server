@@ -1,0 +1,39 @@
+<!-- 문 원격 열기 탭 -->
+<div class="tab-pane fade"
+     id="door-remote-open"
+     role="tabpanel"
+     aria-labelledby="door-remote-open-tab">
+    <h3 class="h4 h-lg-3">문 원격 열기</h3>
+    <hr>
+    <button class="btn btn-success" onclick="remoteOpenDoor()">문 열기</button>
+</div>
+
+<script>
+function remoteOpenDoor() {
+    const btn = document.querySelector('#door-remote-open button');
+    btn.disabled = true;  // 중복 클릭 방지
+
+    fetch('/admin/door/remote-open', { 
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.code === 200) {
+            alert('문 열기 성공!');
+        } else {
+            alert('문 열기 실패: ' + (data.message || '서버에서 상세 메시지 없음'));
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert('문 열기 중 오류 발생');
+    })
+    .finally(() => {
+        btn.disabled = false;
+    });
+}
+</script>

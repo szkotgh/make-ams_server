@@ -1,0 +1,131 @@
+<!-- KW Bot setting tab -->
+<div class="tab-pane fade" id="kw-bot" role="tabpanel" aria-labelledby="kw-bot-tab">
+    <div class="d-flex justify-content-between">
+        <h3 class="h4 h-lg-3">카카오워크 봇 설정</h3>
+        <button class="btn btn-primary" onclick="createBot()">
+            카카오워크 봇 생성
+        </button>
+    </div>
+    <hr>
+    
+    <!-- Bot list -->
+    <div id="bot-list">
+        {% for bot in bot_list %}
+        <div class="card hstack gap-2 mb-2">
+            <div class="card-body">
+                <h5 class="card-title">
+                    {{ bot.name }}
+                    {% if bot.is_default %}
+                        <span class="badge text-bg-primary">기본 봇</span>
+                    {% endif %}
+                </h5>
+                <p class="card-text text-muted">{{ bot.created_at }} 생성</p>
+            </div>
+            {% if not bot.is_default %}
+                <div class="ms-auto">
+                    <button class="btn btn-outline-primary m-2" 
+                            onclick="setDefaultBot({{ bot.id }})">
+                        기본 봇으로 설정
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+class BotManager {
+    static setDefaultBot(botId) {
+        if (!confirm('이 봇을 기본 봇으로 설정하시겠습니까?')) {
+            return;
+        }
+
+        $.ajax({
+            url: '{{ url_for("router.admin.kw_bot_manage.set_default") }}',
+            type: 'POST',
+            data: { bot_id: botId },
+            dataType: 'json',
+            success: function(response) {
+                alert(response.message);
+                window.location.reload();
+            },
+            error: function(xhr, status, error) {
+                console.error('Error setting default bot:', error);
+                let errorMessage = '기본 봇 설정 중 오류가 발생했습니다.';
+                
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                } else if (xhr.responseText) {
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        if (response.message) {
+                            errorMessage = response.message;
+                        }
+                    } catch (e) {
+                        console.error('JSON parsing failed:', e);
+                    }
+                }
+                
+                alert(errorMessage);
+            }
+        });
+    }
+
+    static createKWBot() {
+        const botName = prompt('봇 이름을 입력해주세요:');
+        if (!botName) {
+            alert('취소되었습니다.');
+            return;
+        }
+
+        const botAppKey = prompt('봇 App Key를 입력해주세요:');
+        if (!botAppKey) {
+            alert('취소되었습니다.');
+            return;
+        }
+
+        $.ajax({
+            url: '{{ url_for("router.admin.kw_bot_manage.create") }}',
+            type: 'POST',
+            data: { bot_name: botName, bot_app_key: botAppKey },
+            dataType: 'json',
+            success: function(response) {
+                if (response.code === 200) {
+                    alert(response.message);
+                } else {
+                    alert(response.message);
+                }
+                location.reload();
+            },
+            error: function(xhr, status, error) {
+                console.error('Error creating bot:', error);
+                let errorMessage = '봇 생성 중 오류가 발생했습니다.';
+                
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                } else if (xhr.responseText) {
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        if (response.message) {
+                            errorMessage = response.message;
+                        }
+                    } catch (e) {
+                        console.error('JSON parsing failed:', e);
+                    }
+                }
+                
+                alert(errorMessage);
+            }
+        });
+    }
+}
+
+function setDefaultBot(botId) {
+    BotManager.setDefaultBot(botId);
+}
+
+function createBot() {
+    BotManager.createKWBot();
+}
+</script>

@@ -1,5 +1,6 @@
-from email import utils
 import os
+import secrets
+import string
 import uuid
 import hashlib
 from datetime import datetime, timedelta
@@ -11,7 +12,7 @@ class ResultDTO():
         self.code = code
         self.message = message
         self.data = data
-        self.success = success # 내부 결과 소통용
+        self.success = success # Internal communication
 
     def to_response(self):
         response = {
@@ -26,6 +27,10 @@ def generate_uuid() -> str:
 
 def generate_hash(len: int) -> str:
     return os.urandom(16).hex()[:len]
+
+def genetare_alnum_hash(length: int) -> str:
+    chars = string.ascii_letters + string.digits  # A-Z, a-z, 0-9
+    return ''.join(secrets.choice(chars) for _ in range(length))
 
 def str_to_hash(input_string: str) -> str:
     return hashlib.sha256(input_string.encode()).hexdigest()
@@ -111,3 +116,29 @@ def is_valid_password(password: str) -> RegexResultDTO:
 
     return RegexResultDTO(success=True, detail="올바른 비밀번호입니다.")
 
+def is_valid_date(date_str: str) -> RegexResultDTO:
+    pattern = r'^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])\s(0[0-9]|1[0-9]|2[0-3]):[0-5]\d:[0-5]\d$'
+    if not re.fullmatch(pattern, date_str or ''):
+        return RegexResultDTO(success=False, detail="날짜 형식은 YYYY-MM-DD HH:MM:SS 여야 합니다.")
+
+    try:
+        datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S')
+        return RegexResultDTO(success=True, detail="올바른 날짜 형식입니다.")
+    except ValueError:
+        return RegexResultDTO(success=False, detail="존재하지 않는 날짜/시간입니다.")
+
+def is_valid_nfc_card_status(card_status: str) -> RegexResultDTO:
+    if card_status not in ['active', 'disabled', 'lost', 'stolen', 'blocked']:
+        return RegexResultDTO(
+            success=False,
+            detail="잘못된 카드 상태입니다."
+        )
+    return RegexResultDTO(success=True, detail="올바른 카드 상태입니다.")
+    
+def is_valid_qr_status(qr_status: str) -> RegexResultDTO:
+    if qr_status not in ['active', 'disabled', 'expired']:
+        return RegexResultDTO(
+            success=False,
+            detail="잘못된 QR 상태입니다."
+        )
+    return RegexResultDTO(success=True, detail="올바른 QR 상태입니다.")

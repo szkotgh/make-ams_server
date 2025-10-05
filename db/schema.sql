@@ -1,11 +1,13 @@
 -- AMS Server Database Schema
--- All table creation SQL statements
 
 -- Device Management
-CREATE TABLE IF NOT EXISTS devices (
-    id TEXT PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS terminals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     token TEXT NOT NULL,
     name TEXT NOT NULL,
+    is_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    last_heartbeat TIMESTAMP DEFAULT (DATETIME(CURRENT_TIMESTAMP, '+9 hours')),
+    updated_at TIMESTAMP DEFAULT (DATETIME(CURRENT_TIMESTAMP, '+9 hours')),
     created_at TIMESTAMP DEFAULT (DATETIME(CURRENT_TIMESTAMP, '+9 hours'))
 );
 
@@ -76,32 +78,74 @@ CREATE TABLE IF NOT EXISTS auth_qr (
     FOREIGN KEY (user_uuid) REFERENCES users (uuid)
 );
 
--- NFC Authentication
+-- NFC Card Management
 CREATE TABLE IF NOT EXISTS auth_nfc (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    nfc_hash BOOLEAN NOT NULL,
-    is_active BOOLEAN NOT NULL,
-    regi_uuid TEXT NOT NULL,
+    id TEXT PRIMARY KEY,  -- 카드 식별용
+    name TEXT NOT NULL,                    -- 별칭
+    nfc_hash TEXT NOT NULL,                -- 카드 식별용 해시
+    pin_hash TEXT NULL,                    -- PIN 인증용 해시 (없을 수도 있음. 소유 유저가 원할 경우 설정하는 거임)
+    pin_salt TEXT NULL,                    -- PIN 해시용 솔트
+    status TEXT NOT NULL DEFAULT 'active',                  -- 카드 상태: active, lost, stolen, disabled
+    created_at TIMESTAMP DEFAULT (DATETIME(CURRENT_TIMESTAMP, '+9 hours'))
+);
+
+-- NFC Card Owner Management
+CREATE TABLE IF NOT EXISTS auth_nfc_owner (
+    nfc_id TEXT PRIMARY KEY NOT NULL, -- 카드 주인은 한 명만 가능
     owner_uuid TEXT NOT NULL,
-    pin_hash TEXT NULL,
     created_at TIMESTAMP DEFAULT (DATETIME(CURRENT_TIMESTAMP, '+9 hours')),
-    FOREIGN KEY (regi_uuid) REFERENCES users (uuid),
+    FOREIGN KEY (nfc_id) REFERENCES auth_nfc (id),
     FOREIGN KEY (owner_uuid) REFERENCES users (uuid)
+);
+
+-- Guest NFC Card Management
+CREATE TABLE IF NOT EXISTS guest_auth_nfc (
+    nfc_id TEXT PRIMARY KEY,
+    nfc_hash TEXT NOT NULL UNIQUE,
+    card_name TEXT NOT NULL,
+    card_status TEXT NOT NULL DEFAULT 'active', -- active, disabled, lost, stolen, blocked
+    use_count INTEGER NOT NULL DEFAULT 0,
+    guest_name TEXT NOT NULL,
+    creator_uuid TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT (DATETIME(CURRENT_TIMESTAMP, '+9 hours')),
+    
+    FOREIGN KEY (creator_uuid) REFERENCES users (uuid)
+);
+
+-- Guest QR Code Management
+CREATE TABLE IF NOT EXISTS guest_auth_qr (
+    qr_id TEXT PRIMARY KEY NOT NULL,
+    auth_hash TEXT NOT NULL UNIQUE,
+    qr_name TEXT NOT NULL,
+    qr_status TEXT NOT NULL DEFAULT 'active', -- active, disabled
+    use_count INTEGER NOT NULL DEFAULT 0,
+    guest_name TEXT NOT NULL,
+    creator_uuid TEXT NOT NULL,
+    effective_date TIMESTAMP NOT NULL,
+    expiration_date TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT (DATETIME(CURRENT_TIMESTAMP, '+9 hours')),
+
+    FOREIGN KEY (creator_uuid) REFERENCES users (uuid)
 );
 
 -- Door Status
 CREATE TABLE IF NOT EXISTS door_status (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     auth_code BOOLEAN NOT NULL,
     button BOOLEAN NOT NULL,
     nfc BOOLEAN NOT NULL,
     status TEXT NOT NULL,
-    remote_open BOOLEAN NOT NULL,
+    remote_change_by_uuid TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT (DATETIME(CURRENT_TIMESTAMP, '+9 hours'))
+);
+
+CREATE TABLE IF NOT EXISTS door_remote (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     remote_open_by_uuid TEXT NOT NULL,
     remote_open_used BOOLEAN NOT NULL,
-    created_at TIMESTAMP DEFAULT (DATETIME(CURRENT_TIMESTAMP, '+9 hours')),
-    FOREIGN KEY (auth_code) REFERENCES auth_qr (auth_code)
+    created_at TIMESTAMP DEFAULT (DATETIME(CURRENT_TIMESTAMP, '+9 hours'))
 );
+
 
 -- KakaoWork Bot
 CREATE TABLE IF NOT EXISTS kakaowork_bot (
@@ -142,7 +186,7 @@ CREATE TABLE IF NOT EXISTS user_settings (
 CREATE TABLE IF NOT EXISTS request_open_door (
     device_id TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT (DATETIME(CURRENT_TIMESTAMP, '+9 hours')),
-    FOREIGN KEY (device_id) REFERENCES devices (id)
+    FOREIGN KEY (device_id) REFERENCES terminals (id)
 );
 
 -- Access Log

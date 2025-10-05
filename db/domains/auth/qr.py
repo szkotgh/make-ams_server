@@ -44,6 +44,11 @@ def verify_qr(qr_code: str) -> db.DBResultDTO:
             if utils.is_minutes_passed(qr_data['created_at'], 1):
                 insert_access_log(user_uuid=qr_user_uuid, method="QR", success=False, reason="만료된 QR 코드")
                 return db.DBResultDTO(success=False, detail="만료된 QR 코드")
+            cursor.execute("SELECT auth_code FROM door_status ORDER BY id DESC LIMIT 1")
+            door_status = cursor.fetchone()
+            if not door_status or door_status['auth_code'] != 1:
+                insert_access_log(user_uuid=qr_user_uuid, method="QR", success=False, reason="QR 인증 불가 (door_status)")
+                return db.DBResultDTO(success=False, detail="QR 인증 불가")
             cursor.execute("UPDATE auth_qr SET use_count = ? WHERE id = ?", (use_count+1, qr_id,))
         insert_access_log(user_uuid=qr_user_uuid, method="QR", success=True, reason="QR 인증 성공")
         return db.DBResultDTO(success=True, detail="QR 인증 성공", data={"user_uuid": qr_user_uuid})

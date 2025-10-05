@@ -31,7 +31,7 @@ def get_settings():
     except Exception as e:
         return utils.ResultDTO(code=500, message=f"서버 오류가 발생했습니다: {str(e)}", success=False).to_response()
 
-@settings_bp.route('', methods=['POST'])
+@settings_bp.route('', methods=['PATCH'])
 @login_required
 def set_setting():
     try:

@@ -64,6 +64,5 @@ def find_user_by_email(app_key, email):
         user = result_json.get("user", {})
         filtered_user = {key: user.get(key, None) for key in dto_keys}
         return DBResultDTO(success=True, detail="카카오워크 유저 정보를 조회했습니다.", data=KWUserDTO(**filtered_user))
-    print(result_json)
     return DBResultDTO(success=False, detail="카카오워크 유저 정보를 조회할 수 없습니다.")
 

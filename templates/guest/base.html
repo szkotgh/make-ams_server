@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="theme-color" content="#007bff">
+    <title>{% if title %}{{ title }}{% else %}MAKE; AMS - Guest{% endif %}</title>
+    <style>
+        @font-face {
+            font-family: 'AppleSDGothicNeoB';
+            src: url("{{ url_for('static', filename='fonts/AppleSDGothicNeoB.ttf') }}") format('truetype');
+        }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/bootstrap.min.css') }}">
+    {% block head %}{% endblock head %}
+</head>
+
+<body>
+    {% block body %}{% endblock body %}
+    {% include 'components/toast.html' %}
+    {% include 'components/flash.html' %}
+    {% include 'components/loader.html' %}
+
+    <script type="text/javascript" src="{{ url_for('static', filename='assets/jquery-3.7.1.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='assets/qrcode.min.js') }}"></script>
+    {% block scripts %}{% endblock scripts %}
+</body>
+
+</html>

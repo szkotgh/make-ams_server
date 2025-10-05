@@ -1,4 +1,4 @@
-const CACHE_NAME = 'make-ams-v1';
+const CACHE_NAME = 'make-amsmk2';
 const urlsToCache = [
     '/',
     '/static/manifest.webmanifest',
@@ -13,60 +13,47 @@ const urlsToCache = [
 self.addEventListener("install", (e) => {
     console.log("[Service Worker] installed", e);
     e.waitUntil(
-        caches.open(CACHE_NAME)
-            .then((cache) => {
-                console.log('Opened cache');
-                return cache.addAll(urlsToCache);
-            })
-    );
-});
-
-self.addEventListener("activate", (e) => {
-    console.log("[Service Worker] activated", e);
-    e.waitUntil(
-        caches.keys().then((cacheNames) => {
-            return Promise.all(
-                cacheNames.map((cacheName) => {
-                    if (cacheName !== CACHE_NAME) {
-                        console.log('Deleting old cache:', cacheName);
-                        return caches.delete(cacheName);
-                    }
-                })
-            );
+        Promise.resolve().then(() => {
+            console.log('Service Worker installed');
         })
     );
 });
 
+self.addEventListener("activate", (e) => {
+    console.log("[Service Worker] activated", e)
+});
+
 self.addEventListener("fetch", (e) => {
+    if (e.request.method !== 'GET') {
+        return;
+    }
+    
+    if (e.request.mode === 'navigate') {
+        return;
+    }
+    
+    if (e.request.url.includes('/api/') || e.request.url.includes('/user/') || e.request.url.includes('/admin/')) {
+        return;
+    }
+    
     console.log("[Service Worker] fetched resource " + e.request.url);
     e.respondWith(
-        caches.match(e.request)
-            .then((response) => {
+        fetch(e.request).then((response) => {
+            if (response.status === 200 && urlsToCache.some(url => e.request.url.includes(url))) {
+                const responseToCache = response.clone();
+                caches.open(CACHE_NAME).then(cache => {
+                    cache.put(e.request, responseToCache);
+                });
+            }
+            return response;
+        }).catch(() => {
+            return caches.match(e.request).then(response => {
                 if (response) {
                     return response;
                 }
-                
-                return fetch(e.request).then(
-                    (response) => {
-                        if (!response || response.status !== 200 || response.type !== 'basic') {
-                            return response;
-                        }
-
-                        const responseToCache = response.clone();
-                        caches.open(CACHE_NAME)
-                            .then((cache) => {
-                                cache.put(e.request, responseToCache);
-                            });
-
-                        return response;
-                    }
-                );
-            })
-            .catch(() => {
-                if (e.request.mode === 'navigate') {
-                    return caches.match('/');
-                }
-            })
+                return fetch(e.request);
+            });
+        })
     );
 });
 

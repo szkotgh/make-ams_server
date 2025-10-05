@@ -25,7 +25,7 @@ def get():
     except Exception as e:
         return utils.ResultDTO(code=500, message=f"서버 오류가 발생했습니다: {str(e)}", success=False).to_response()
 
-@notification_settings_bp.route('/update', methods=['POST'])
+@notification_settings_bp.route('/update', methods=['PATCH'])
 @login_required
 def update():
     try:
@@ -35,16 +35,20 @@ def update():
         
         user_uuid = session_info.data['user_info']['uuid']
         
-        notification_type = request.form.get('type')
-        enabled_str = request.form.get('enabled')
+        data = request.get_json()
+        if not data:
+            return utils.ResultDTO(code=400, message="요청 데이터가 없습니다.", success=False).to_response()
+        
+        notification_type = data.get('type')
+        enabled = data.get('enabled')
         
         if notification_type not in ['notification_login', 'notification_door_access']:
             return utils.ResultDTO(code=400, message="잘못된 알림 유형입니다.", success=False).to_response()
         
-        if enabled_str is None:
+        if enabled is None:
             return utils.ResultDTO(code=400, message="enabled 값이 제공되지 않았습니다.", success=False).to_response()
         
-        is_enabled = enabled_str.lower() in ['true', '1', 'yes', 'on']
+        is_enabled = bool(enabled)
         setting_key = notification_type
         
         result = db_user_settings.set_setting(user_uuid, setting_key, is_enabled, 'boolean')
